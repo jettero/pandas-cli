@@ -1,0 +1,13 @@
+
+# some datatypes we test on
+*.csv
+*.tsv
+*.json
+
+# python cruft and other build stuff
+*.pyc
+/*.egg-info
+__pycache__
+/dist
+/build
+/pandas_cli/version.py

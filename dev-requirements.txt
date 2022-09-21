@@ -1,0 +1,16 @@
+
+
+# I think this already does what I want...
+seaborn-command
+
+# but there's no such thing for pandas afaik
+click
+pandas
+
+# already included above but worth mentioning
+matplotlib
+seaborn
+numpy
+
+# other gadgets
+simplejson
