@@ -23,4 +23,20 @@ There's a similar
 [matrix](https://wiki.python.org/moin/PythonTestingToolsTaxonomy) of testing
 tools as well.
 
+## pyproject.toml and setup.cfg
 
+Wait, why do you have both? Isn't one replace to supplant the other?
+
+IMO, `pyproject.toml` isn't done cooking yet. I like the syntax for
+`setuptools_scm`, but I quickly found that if you have `setuptools_scm` generate
+the `version.py` file, there's no way to also import the version from it using
+only `pyproject.toml`.
+
+Near as I can tell, they're still working on this chicken/egg problem. I think
+they're reluctant to do the needful becuase the toml should be parsable in one
+pass and the idea of reducing the optimality is unpalatable -- but this is just
+speculation on my part.
+
+If you know of a way to generate `version.py` from `git --describe` and import
+the version into `pyproject.toml` (or otherwise express this without using `sed`
+or a `Makefile`), please definitely let me know.
