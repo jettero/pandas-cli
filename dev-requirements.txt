@@ -1,16 +1,8 @@
 
+# to actually use the package
+# (can we get this from setup.cfg somehow?)
+-r requirements.txt
 
-# I think this already does what I want...
-seaborn-command
-
-# but there's no such thing for pandas afaik
-click
-pandas
-
-# already included above but worth mentioning
-matplotlib
-seaborn
-numpy
-
-# other gadgets
-simplejson
+# to build and test things
+pytest
+build
