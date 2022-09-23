@@ -6,3 +6,7 @@
 # to build and test things
 pytest
 build
+
+# style points
+pre-commit
+black
