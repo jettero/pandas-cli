@@ -1,16 +1,21 @@
 fail_fast: false
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.2.0
+  rev: v4.3.0
   hooks:
   - id: check-yaml
+  - id: check-toml
   - id: end-of-file-fixer
   - id: trailing-whitespace
   - id: mixed-line-ending
   - id: check-merge-conflict
   - id: check-ast
+- repo: meta
+  hooks:
+  - id: check-hooks-apply
+  - id: check-useless-excludes
 - repo: https://github.com/psf/black
-  rev: 20.8b1
+  rev: 22.8.0
   hooks:
   - id: black
     args: ['--line-length', '119']
@@ -21,13 +26,3 @@ repos:
     entry: '\b(?i:wtf)\b'
     types: [ python ]
     language: pygrep
-
-# - repo: https://github.com/pre-commit/mirrors-pylint
-#   rev: 'v2.6.0'
-#   hooks:
-#   - id: pylint
-#     additional_dependencies:
-#   # - . # <--- install current project
-#     - matplotlib
-#     - simplejson
-#     - pandas
