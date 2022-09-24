@@ -26,14 +26,20 @@ def json1(filename="test/output/1.json"):
     os.unlink(filename)
 
 
+def _fh(fname):
+    fh = open(fname, "r")
+    yield fh
+    fh.close()
+
+
 @pytest.fixture
 def csv1_fh(csv1):
-    yield open(csv1, "r")
+    yield from _fh(csv1)
 
 
 @pytest.fixture
 def json1_fh(json1):
-    yield open(json1, "r")
+    yield from _fh(json1)
 
 
 @pytest.fixture

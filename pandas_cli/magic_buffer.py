@@ -9,7 +9,11 @@ class MagicBuffer:
         self.fh = already_buffered_filehandle_maybe
 
     def __repr__(self):
-        return f"MagicBuffer<name={ self.fh.name }>"
+        try:
+            return f"MagicBuffer<name={ self.fh.name }>"
+        except AttributeError:
+            pass
+        return "MagicBuffer"
 
     def head(self):
         if hasattr(self, "_head"):
@@ -31,6 +35,6 @@ class MagicBuffer:
                 a = getattr(self.fh, aname)
                 setattr(self, aname, a)
                 return a
-            except AttributeError:
-                pass
+            except AttributeError as e:
+                raise AttributeError(f"'{self!r}' has no attribute '{aname}'") from e
         raise AttributeError(f"'{self!r}' has no attribute '{aname}'")
