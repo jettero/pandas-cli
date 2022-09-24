@@ -3,6 +3,9 @@
 # (can we get this from setup.cfg somehow?)
 -r requirements.txt
 
+# test requirements
+-r test-requirements.txt
+
 # to build and test things
 pytest
 build
