@@ -69,7 +69,6 @@ def main():
     parser.add_argument("input", nargs="*", default=[sys.stdin], type=argparse.FileType("rb"))
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase verbosity for each -v")
     parser.add_argument("--version", action="version", version=VERSION)
-    parser.add_argument("-o", "--output-filename", type=str)
     parser.add_argument(
         "-s",
         "--strats",
@@ -78,6 +77,9 @@ def main():
         action="append",
         help="decode strategies to try on the different inputs",
         default=DEF_ST,
+    )
+    parser.add_argument(
+        "-o", "--output-filename", type=str, help="instead of outputting to stdout, output to this file"
     )
 
     args = parser.parse_args()
