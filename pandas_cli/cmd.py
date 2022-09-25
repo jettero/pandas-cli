@@ -91,7 +91,8 @@ def main():
         "-o",
         "--output-file",
         help="instead of outputting to stdout, output to this file",
-        type=argparse.FileType("wb"),
+        type=str,
+        default="-",
     )
     parser.add_argument(
         "-f",
@@ -125,9 +126,6 @@ def main():
 
     args.dfz = list(try_readz(args.input))
 
-    if not args.output_file:
-        args.output_file = argparse.FileType("wb")("-")
-
     if len(args.dfz) == 1:
         log.info("converting data with strategy=%s", args.output_format)
         of = getattr(args.dfz[0], f"to_{args.output_format}")
@@ -135,7 +133,7 @@ def main():
         ofkw = dict()
         if "indent" in ofp and args.indent > 0:
             ofkw["indent"] = args.indent
-        dat = of(**ofkw)
-        log.info("outputting to %s", args.output_file.name)
-        args.output_file.write(dat.encode("utf-8"))
-        args.output_file.write(b"\x0a")
+        log.info("outputting to %s", args.output_file)
+        if not args.output_file or args.output_file == "-":
+            args.output_file = argparse.FileType("wb")("-")
+        of(args.output_file, **ofkw)
