@@ -81,6 +81,15 @@ def main():
     parser.add_argument(
         "-o", "--output-filename", type=str, help="instead of outputting to stdout, output to this file"
     )
+    parser.add_argument(
+        "-f",
+        "--output-format",
+        type=str,
+        choices=DEF_ST,
+        metavar="blah",
+        default="json",
+        help=f"format for output -- choose from among: {', '.join(DEF_ST)}",
+    )
 
     args = parser.parse_args()
 
