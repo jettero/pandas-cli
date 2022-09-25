@@ -4,6 +4,11 @@
 *.tsv
 *.json
 
+/blah*
+/file*
+
+/test/output
+
 # python cruft and other build stuff
 *.pyc
 /*.egg-info
