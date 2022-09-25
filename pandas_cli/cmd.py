@@ -7,7 +7,7 @@ import argparse
 import inspect
 import pandas as pd
 import logging
-from .version import __version__ as VERSION
+from .version import version as VERSION
 from .util import special_list_sort as sls
 
 STRATS = {x.replace("read_", ""): getattr(pd, x) for x in dir(pd) if x.startswith("read_")}
