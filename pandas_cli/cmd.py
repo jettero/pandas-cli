@@ -42,7 +42,9 @@ def try_read(ifh, strats=DEF_ST):
     for st in strats:
         if f := STRATS.get(st):
             try:
-                return f(ifh)
+                r = f(ifh)
+                log.info("parsed %s with strategy=%s", ifh_name, st)
+                return r
             except Exception as e:
                 if not ifh.seekable():
                     break
