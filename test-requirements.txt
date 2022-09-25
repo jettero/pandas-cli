@@ -1,3 +1,6 @@
 
 # needed for testing
+pytest
+
+# needed by the generators
 simplejson
