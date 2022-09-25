@@ -4,10 +4,15 @@
 *.tsv
 *.json
 
+# some other typical test files to ignore
 /blah*
 /file*
 
+# escaped test files might show up here
 /test/output
+
+# people using the makefile might generate these silly things
+/.req.*
 
 # python cruft and other build stuff
 *.pyc
