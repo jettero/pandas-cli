@@ -4,6 +4,7 @@
 import re
 import sys
 import argparse
+import inspect
 import pandas as pd
 import logging
 from .version import __version__ as VERSION
@@ -13,6 +14,7 @@ STRATS = {x.replace("read_", ""): getattr(pd, x) for x in dir(pd) if x.startswit
 NOGO_ST = ("clipboard",)
 MY_SORT = (("csv", "json"), ("table", "excel", "pickle"))
 DEF_ST = tuple(x for x in sorted(STRATS, key=sls(*MY_SORT)) if x not in NOGO_ST)
+OUT_ST = {x.replace("to_", ""): getattr(pd.DataFrame, x) for x in dir(pd.DataFrame) if x.startswith("to_")}
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +68,14 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
-    parser.add_argument("input", nargs="*", default=[sys.stdin], type=argparse.FileType("rb"))
+    parser.add_argument(
+        "input",
+        nargs="*",
+        type=argparse.FileType("rb"),
+        # NOTE that stdin is *NOT* rb, it's a text stream
+        # ... so ... that's confusing.
+        default=[sys.stdin],
+    )
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase verbosity for each -v")
     parser.add_argument("--version", action="version", version=VERSION)
     parser.add_argument(
@@ -79,16 +88,22 @@ def main():
         default=DEF_ST,
     )
     parser.add_argument(
-        "-o", "--output-filename", type=str, help="instead of outputting to stdout, output to this file"
+        "-o",
+        "--output-file",
+        help="instead of outputting to stdout, output to this file",
+        type=argparse.FileType("wb"),
     )
     parser.add_argument(
         "-f",
         "--output-format",
         type=str,
-        choices=DEF_ST,
+        choices=OUT_ST,
         metavar="blah",
         default="json",
-        help=f"format for output -- choose from among: {', '.join(DEF_ST)}",
+        help=f"format for output -- choose from among: {', '.join(OUT_ST)}",
+    )
+    parser.add_argument(
+        "-i", "--indent", type=int, default=2, help="indent outputs that support indenting by this many spaces"
     )
 
     args = parser.parse_args()
@@ -109,3 +124,18 @@ def main():
     )
 
     args.dfz = list(try_readz(args.input))
+
+    if not args.output_file:
+        args.output_file = argparse.FileType("wb")("-")
+
+    if len(args.dfz) == 1:
+        log.info("converting data with strategy=%s", args.output_format)
+        of = getattr(args.dfz[0], f"to_{args.output_format}")
+        ofp = inspect.signature(of).parameters
+        ofkw = dict()
+        if "indent" in ofp and args.indent > 0:
+            ofkw["indent"] = args.indent
+        dat = of(**ofkw)
+        log.info("outputting to %s", args.output_file.name)
+        args.output_file.write(dat.encode("utf-8"))
+        args.output_file.write(b"\x0a")
