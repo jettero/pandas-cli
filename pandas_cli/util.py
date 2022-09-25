@@ -1,4 +1,8 @@
+#
+#
 def special_list_sort(*args):
+    """generate a sorting function that prepends a score to the sort items"""
+
     def inner(x):
         score = 99
         for i, item in enumerate(args):
