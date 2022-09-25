@@ -40,3 +40,8 @@ speculation on my part.
 If you know of a way to generate `version.py` from `git --describe` and import
 the version into `pyproject.toml` (or otherwise express this without using `sed`
 or a `Makefile`), please definitely let me know.
+
+## Makefiles now too?
+
+Yeah, I like makefiles. I kinda miss 'em and without that one centralized
+`./setup.py <cmd>` to work with, ... seems pretty handy again all of a sudden.
