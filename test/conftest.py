@@ -13,7 +13,6 @@ def csv1(filename="test/output/1.csv"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     gen_csv("--output-file", filename)
     yield filename
-    os.unlink(filename)
 
 
 @pytest.fixture
@@ -21,7 +20,6 @@ def json1(filename="test/output/1.json"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     gen_csv("--output-file", filename)
     yield filename
-    os.unlink(filename)
 
 
 def _fh(fname):
