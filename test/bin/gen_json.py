@@ -9,7 +9,7 @@ import simplejson as json
 
 def main(*margs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--objects", type=int, default=-1)
+    parser.add_argument("-r", "--rows", type=int, default=-1)
     parser.add_argument("-a", "--attribute", action="append", type=str)
     parser.add_argument("-p", "--precision", type=int, default=4)
     parser.add_argument("-o", "--output-file", type=argparse.FileType("w"), default=sys.stdout)
@@ -21,12 +21,12 @@ def main(*margs):
 
     attr = args.attribute or ("one", "two", "three")
 
-    if args.objects < 1:
-        args.objects = int((int(os.environ.get("LINES", 25)) - 5) / 5)
+    if args.rows < 1:
+        args.rows = int((int(os.environ.get("LINES", 25)) - 5) / 5)
 
     l = list(
         {x: float(f"{(i+1) + 0.5 + 0.5*random.random():0.{args.precision}f}") for i, x in enumerate(attr)}
-        for _ in range(args.objects)
+        for _ in range(args.rows)
     )
 
     json.dump(l, args.output_file, sort_keys=True, indent=2)
