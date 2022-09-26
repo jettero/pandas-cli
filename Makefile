@@ -6,6 +6,7 @@ check-all-and-build:
 	@+ make --no-print-directory test
 	@+ make --no-print-directory build
 	@+ make --no-print-directory test-feed-json
+	@+ make --no-print-directory test-feed-csv
 
 pre-commit: .req.dev
 	pre-commit run -a
