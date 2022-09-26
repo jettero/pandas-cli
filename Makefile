@@ -5,9 +5,16 @@ check-all-and-build:
 	@+ make --no-print-directory pre-commit
 	@+ make --no-print-directory test
 	@+ make --no-print-directory build
+	@+ make --no-print-directory test-feed-json
 
 pre-commit: .req.dev
 	pre-commit run -a
+
+test-feed-%: test/output/1.% pandas_cli/version.py
+	< $< ./pd
+
+test/output/1.%: test/conftest .req.test
+	pytest --setup-only
 
 test: .req.test
 	pytest
