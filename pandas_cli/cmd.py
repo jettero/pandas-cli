@@ -132,12 +132,12 @@ def main():
     df_final = args.dfz[0]
 
     log.info("converting data with strategy=%s", args.output_format)
-    of = getattr(df_final, f"to_{args.output_format}")
-    ofp = inspect.signature(of).parameters
+    dataframe_output_f = getattr(df_final, f"to_{args.output_format}")
+    ofp = inspect.signature(dataframe_output_f).parameters
     ofkw = dict()
     if "indent" in ofp and args.indent > 0:
         ofkw["indent"] = args.indent
     log.info("outputting to %s", args.output_file)
     if not args.output_file or args.output_file == "-":
         args.output_file = argparse.FileType("wb")("-")
-    of(args.output_file, **ofkw)
+    dataframe_output_f(args.output_file, **ofkw)
