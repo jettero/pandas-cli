@@ -1,4 +1,7 @@
 
+# we need the basics too I suppose
+-r requirements.txt
+
 # needed for testing
 pytest
 
