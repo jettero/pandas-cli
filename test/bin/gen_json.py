@@ -25,7 +25,7 @@ def main(*margs):
         args.objects = int((int(os.environ.get("LINES", 25)) - 5) / 5)
 
     l = list(
-        {x: float(f"{i + 0.5 + 0.5*random.random():0.{args.precision}f}") for i, x in enumerate(attr)}
+        {x: float(f"{(i+1) + 0.5 + 0.5*random.random():0.{args.precision}f}") for i, x in enumerate(attr)}
         for _ in range(args.objects)
     )
 

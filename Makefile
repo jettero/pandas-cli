@@ -10,8 +10,8 @@ check-all-and-build:
 pre-commit: .req.dev
 	pre-commit run -a
 
-test-feed-%: test/output/1.% pandas_cli/version.py
-	< $< ./pd
+test-feed-%: pandas_cli/version.py .req.test
+	./test/bin/gen_$*.py | ./pd -f csv
 
 test/output/1.%: test/conftest .req.test
 	pytest --setup-only
