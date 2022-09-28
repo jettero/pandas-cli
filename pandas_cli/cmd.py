@@ -127,7 +127,7 @@ def main():
     args.dfz = list(try_readz(args.input))
 
     if len(args.dfz) != 1:
-        raise Exception("TODO: support a number of inputs n, given that n ∉ {1}")
+        raise Exception(f"TODO: N={len(args.dfz)} ∉ {{1}}; kaboom")
 
     df_final = args.dfz[0]
 
