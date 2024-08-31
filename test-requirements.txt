@@ -1,9 +1,0 @@
-
-# we need the basics too I suppose
--r requirements.txt
-
-# needed for testing
-pytest
-
-# needed by the generators
-simplejson

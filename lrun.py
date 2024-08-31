@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from pandas_cli.cmd import main
+from pdc.cmd import entry_point as main
 
 # NOTE: this is just a way to invoke the program in testing. The actual
 # entrypoints are defined in setup.cfg

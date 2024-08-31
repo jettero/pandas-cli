@@ -9,7 +9,7 @@
 /file*
 
 # escaped test files might show up here
-/test/output
+/t/output
 
 # people using the makefile might generate these silly things
 /.req.*
@@ -20,4 +20,4 @@
 __pycache__
 /dist
 /build
-/pandas_cli/version.py
+/pdc/version.py

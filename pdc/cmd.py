@@ -63,7 +63,7 @@ def try_readz(ifhs, strats=DEF_ST):
             yield dat
 
 
-def main():
+def entry_point():
     parser = argparse.ArgumentParser(  # description='this program',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )

@@ -1,6 +1,30 @@
+
+[project]
+name = "pandas-cli"
+description = "I want to be able to do a bunch of pandas things without having to write a python program"
+license = {text="GPL-2.0-only"}
+dynamic = ["version"]
+authors = [{name="Paul Miller", email="paul@merb.net" }]
+maintainers = [{name="Paul Miller", email="paul@merb.net" }]
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.8"
+dependencies = [
+    'pandas[excel,plot,output-formatting,computation,html,xml,hdf5,aws,gcp,clipboard,compression,performance,computation]',
+    'simplejson',
+]
+
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools", "setuptools_scm[toml]"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-write_to = "pandas_cli/version.py"
+write_to = "pdc/version.py"
+
+[project.scripts]
+jpd = "pdc.cmd:entry_point"
+
+[project.urls]
+Github = "https://github.com/jettero/pandas-cli.git"
+
+[tool.setuptools]
+packages = ["pdc"]
