@@ -1,4 +1,28 @@
 
+# I've had the idea to make this more than once
+
+I started making this like two years ago, but lost interest. Then I started
+making it again (see contrib/pd-thing). I didn't finish it, but I remembered I
+had the same idea before. Maybe by copying my new version into contrib/ I'll
+suddenly start working on this again? we'll see.
+
+My fresher energy ideas (although I still like the below) is that I really need
+a way to combine various input csvs column-wise or row-wise (or maybe horizontal
+vs vertical)... anyway, my point is that there needs to be an expressive
+input/output macro-language so I can get what I want in the end.
+
+pd-thing can do the following (poorly):
+
+- concatenate several csv files, some with headers, some without
+- combine the rows from two or more csv files, joined on a key field
+- output the rows of a single csv that don't match entries from the following
+  files
+
+It doesn't do these things particularly well, but my first goals on resurrection
+will be to transpo those abilities into this fledgling project ... and then come
+up with some kind of macro language to facilitate the above and anything else
+the user might imagine.
+
 # what is this?
 
 I like the idea of using
