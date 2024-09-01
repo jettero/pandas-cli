@@ -3,8 +3,8 @@
 
 from collections import namedtuple
 from lark import Lark, Transformer, v_args
-
-File = namedtuple("File", ["df", "filename", "path"])
+from .util import File
+import pdc.op
 
 grammar = """
 start: texpr (";" texpr)*
@@ -30,6 +30,15 @@ MACRO_EXPRESSION_ARG: /[a-z]/
 """
 
 
+class Call(namedtuple("Call", ["fn", "args"])):
+    def __call__(self):
+        args = [x() if callable(x) else x for x in self.args]
+        return self.fn(*args)
+
+    def __repr__(self):
+        return f"{self.fn.__module__}.{self.fn.__name__}{tuple(self.args)}"
+
+
 def _op_idx(op):
     op = int(op)
     idx = op - 1
@@ -47,7 +56,7 @@ class MacroTransformer(Transformer):
         return op[-1]
 
     def concat(self, op1, op2):
-        return ("concat", op1, op2)
+        return Call(pdc.op.concat, (op1, op2))
 
     def file(self, op):
         op, idx = _op_idx(op)
@@ -79,10 +88,10 @@ transformer = MacroTransformer()
 parser = Lark(grammar, parser="lalr", transformer=transformer)
 
 
-def parse(statement="r(f*: a+b)", *files, resolv_tmp=True):
+def parse(statement="r(f*: a+b)", files=None, resolv_tmp=True):
     transformer.resolv_tmp = resolv_tmp
     for item in files:
         if not isinstance(item, File):
-            raise ValueError(f"{item} is an invalid pdc.parser.File argument")
-    transformer.files = files
+            raise ValueError(f"{item} is an invalid pdc.File argument")
+    transformer.files = files if isinstance(files, (list, tuple)) else list()
     return parser.parse(statement)
