@@ -1,4 +1,3 @@
-
 # some datatypes we test on
 *.csv
 *.tsv
@@ -10,6 +9,9 @@
 
 # escaped test files might show up here
 /t/output
+
+# we want to keep otherwise ignored items here
+!/t/asset/*
 
 # people using the makefile might generate these silly things
 /.req.*
