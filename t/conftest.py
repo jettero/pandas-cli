@@ -4,6 +4,8 @@
 import os
 import pytest
 
+import pdc.util
+
 from t.bin.gen_csv import main as gen_csv
 from t.bin.gen_json import main as gen_json
 
@@ -36,3 +38,18 @@ def csv1_fh(csv1):
 @pytest.fixture
 def json1_fh(json1):
     yield from _fh(json1)
+
+
+@pytest.fixture
+def f1():
+    yield pdc.util.read_csv("t/asset/test1.csv")
+
+
+@pytest.fixture
+def f2():
+    yield pdc.util.read_csv("t/asset/test2.csv")
+
+
+@pytest.fixture
+def f3():
+    yield pdc.util.read_csv("t/asset/test3.csv")
