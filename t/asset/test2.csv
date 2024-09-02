@@ -1,4 +1,4 @@
-id,var,val
-0,i,7
-0,j,8
-0,k,9
+id,var,val,ext
+5,i,7,false
+6,j,8,false
+7,k,9,false

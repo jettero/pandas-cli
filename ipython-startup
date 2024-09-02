@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import pandas as pd
+
+import pdc.util
+import pdc.parser
+import pdc.op
+
+f1 = pdc.util.read_csv('t/asset/test1.csv')
+f2 = pdc.util.read_csv('t/asset/test2.csv')
+f3 = pdc.util.read_csv('t/asset/test3.csv')
+pf = pdc.parser.parse('f1 + f2; t1 + f3', files=(f1,f2,f3))
+df = pf()

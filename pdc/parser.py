@@ -14,8 +14,8 @@ texpr: expr
 expr: operation | df
 
 operation: expr "+" expr -> concat
-         | expr "*" expr -> join
-         | expr "-" expr -> filter
+         | expr "." expr -> column_merge
+         | expr "-" expr -> left_join
 
 df: file | tmp
 
@@ -23,8 +23,6 @@ file: "f" NUMBER
 tmp: "t" NUMBER
 
 %import common.NUMBER
-FILENAME_GLOB: /[a-zA-Z0-9*._-]+/
-MACRO_EXPRESSION_ARG: /[a-z]/
 %import common.WS
 %ignore WS
 """
@@ -57,6 +55,15 @@ class MacroTransformer(Transformer):
 
     def concat(self, op1, op2):
         return Call(pdc.op.concat, (op1, op2))
+
+    def join(self, op1, op2):
+        return Call(pdc.op.join, (op1, op2))
+
+    def filter(self, op1, op2):
+        return Call(pdc.op.filter, (op1, op2))
+
+    def remove(self, op1, op2):
+        return Call(pdc.op.remove, (op1, op2))
 
     def file(self, op):
         op, idx = _op_idx(op)
