@@ -33,7 +33,7 @@ tmp: "t" NUMBER
 class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __call__(self):
         args = [x() if callable(x) else x for x in self.args]
-        print(f"exec({self!r})")
+        print(f"WTF exec(*{self.args}, **{self.kw})")
         return self.fn(*args, **self.kw)
 
     def __repr__(self):
@@ -60,8 +60,13 @@ class MacroTransformer(Transformer):
         return ("key", str(name))
 
     def concat(self, op1, op2, *opt):
+        for o in opt:
+            print(f"WTF( {o!r} )")
+        args = (op1, op2)
         kw = {k: v for o in opt for k, v in zip(o[::2], o[1::2])}
-        return Call(pdc.op.concat, (op1, op2), kw)
+        c = Call(pdc.op.concat, (op1, op2), kw)
+        print(f"WTF {c!r}")
+        return c
 
     def file(self, op):
         op, idx = _op_idx(op)
