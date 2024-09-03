@@ -22,17 +22,17 @@ def special_list_sort(*args):
     return inner
 
 
-GLOBAL_ID_COUNTER = 1
+ID_COUNTER = 1
 
 
 def read_csv(fname, headers=None, id=None):
-    global GLOBAL_ID_COUNTER
+    global ID_COUNTER
     if id is None or int(id) < 1:
-        id = GLOBAL_ID_COUNTER
-        GLOBAL_ID_COUNTER += 1
+        id = ID_COUNTER
+        ID_COUNTER += 1
     else:
-        if id >= GLOBAL_ID_COUNTER:
-            GLOBAL_ID_COUNTER = id + 1
+        if id >= ID_COUNTER:
+            ID_COUNTER = id + 1
     if headers is None:
         df = pd.read_csv(fname)
     else:
