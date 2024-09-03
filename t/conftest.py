@@ -40,16 +40,16 @@ def json1_fh(json1):
     yield from _fh(json1)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def f1():
-    yield pdc.util.read_csv("t/asset/test1.csv")
+    yield pdc.util.read_csv("t/asset/test1.csv", id=1)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def f2():
-    yield pdc.util.read_csv("t/asset/test2.csv")
+    yield pdc.util.read_csv("t/asset/test2.csv", id=2)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def f3():
-    yield pdc.util.read_csv("t/asset/test3.csv")
+    yield pdc.util.read_csv("t/asset/test3.csv", id=3)
