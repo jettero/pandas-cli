@@ -1,4 +1,4 @@
-id,var,val,blarg
-8,m,3,blat
-9,n,4,blather
-10,o,5,goom
+var,val,blarg
+m,3,blat
+n,4,blather
+o,5,goom

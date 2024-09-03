@@ -1,4 +1,5 @@
-id,var,val,ext
-5,i,7,false
-6,j,8,false
-7,k,9,false
+var,val,ext
+a,0,true
+i,7,false
+j,8,false
+k,9,false

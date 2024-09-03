@@ -7,34 +7,37 @@ from .util import File
 import pdc.op
 
 grammar = """
+%import common.CNAME
+%import common.NUMBER
+%import common.WS
+%ignore WS
+
 start: texpr (";" texpr)*
 
 texpr: expr
 
 expr: operation | df
 
-operation: expr "+" expr -> concat
-         | expr "." expr -> column_merge
-         | expr "-" expr -> left_join
+operation: expr "+" expr opt* -> concat
+
+opt: "@" CNAME -> key
+   | "on" "(" CNAME ")" -> key
 
 df: file | tmp
 
 file: "f" NUMBER
 tmp: "t" NUMBER
-
-%import common.NUMBER
-%import common.WS
-%ignore WS
 """
 
 
-class Call(namedtuple("Call", ["fn", "args"])):
+class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __call__(self):
         args = [x() if callable(x) else x for x in self.args]
-        return self.fn(*args)
+        print(f"exec({self!r})")
+        return self.fn(*args, **self.kw)
 
     def __repr__(self):
-        return f"{self.fn.__module__}.{self.fn.__name__}{tuple(self.args)}"
+        return f"{self.fn.__module__}.{self.fn.__name__}(*{self.args!r}, **{self.kw!r})"
 
 
 def _op_idx(op):
@@ -53,17 +56,12 @@ class MacroTransformer(Transformer):
     def start(self, *op):
         return op[-1]
 
-    def concat(self, op1, op2):
-        return Call(pdc.op.concat, (op1, op2))
+    def key(self, name):
+        return ("key", str(name))
 
-    def join(self, op1, op2):
-        return Call(pdc.op.join, (op1, op2))
-
-    def filter(self, op1, op2):
-        return Call(pdc.op.filter, (op1, op2))
-
-    def remove(self, op1, op2):
-        return Call(pdc.op.remove, (op1, op2))
+    def concat(self, op1, op2, *opt):
+        kw = {k: v for o in opt for k, v in zip(o[::2], o[1::2])}
+        return Call(pdc.op.concat, (op1, op2), kw)
 
     def file(self, op):
         op, idx = _op_idx(op)
