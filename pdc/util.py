@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 from collections import namedtuple
 
@@ -42,3 +43,18 @@ def read_csv(fname, headers=None, id=None):
             headers = headers.df.columns.tolist()
         df = pd.read_csv(fname, header=None, names=headers)
     return File(id, fname, df)
+
+
+SAY_DEBUG = 0
+SAY_INFO = 1
+SAY_WARN = 2
+SAY_ERROR = 3
+SAY_LEVEL = SAY_INFO
+
+SAY_WORDS = "DEBUG INFO WARN ERROR".split()
+
+
+def say(*msg, level=SAY_INFO):
+    level = max(SAY_DEBUG, min(level, SAY_ERROR))
+    if level >= SAY_LEVEL:
+        print(f"[{SAY_WORDS[level]}]", *msg, file=sys.stderr)
