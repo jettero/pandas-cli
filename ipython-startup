@@ -7,6 +7,8 @@ import pdc.util
 import pdc.parser
 import pdc.op
 
+pdc.util.set_say_level(pdc.util.SAY_ERROR)
+
 f1 = pdc.util.read_csv('t/asset/test1.csv')
 f2 = pdc.util.read_csv('t/asset/test2.csv')
 f3 = pdc.util.read_csv('t/asset/test3.csv')

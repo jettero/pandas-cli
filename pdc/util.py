@@ -4,9 +4,9 @@ import pandas as pd
 from collections import namedtuple
 
 
-class File(namedtuple("File", ["id", "fname", "df"])):
+class File(namedtuple("File", ["fname", "df"])):
     def __repr__(self):
-        return f"f{self.id}<{os.path.basename(self.fname)}>"
+        return f"<{os.path.basename(self.fname)}>"
 
 
 def special_list_sort(*args):
@@ -23,17 +23,7 @@ def special_list_sort(*args):
     return inner
 
 
-ID_COUNTER = 1
-
-
-def read_csv(fname, headers=None, id=None):
-    global ID_COUNTER
-    if id is None or int(id) < 1:
-        id = ID_COUNTER
-        ID_COUNTER += 1
-    else:
-        if id >= ID_COUNTER:
-            ID_COUNTER = id + 1
+def read_csv(fname, headers=None):
     if headers is None:
         df = pd.read_csv(fname)
     else:
@@ -42,7 +32,7 @@ def read_csv(fname, headers=None, id=None):
         elif isinstance(headers, File):
             headers = headers.df.columns.tolist()
         df = pd.read_csv(fname, header=None, names=headers)
-    return File(id, fname, df)
+    return File(fname, df)
 
 
 SAY_TRACE = 0
@@ -56,7 +46,7 @@ SAY_WORDS = "TRACE DEBUG INFO WARN ERROR".split()
 def set_say_level(x=None):
     global SAY_LEVEL
     try:
-        x = x if x is not None else os.environ["PDC_LOG_LEVEL"]
+        x = x if x is not None else os.environ["PDC_SAY_LEVEL"]
         try:
             x = x.upper()
             x = SAY_WORDS.index(x)

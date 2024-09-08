@@ -56,25 +56,12 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
     def short(self):
         return f"{{{self.snam[0:1]}{self.op}}}"
 
-    @property
-    def medium(self):
-        try:
-            v = self.src[self.idx]
-            return f"{v}"
-        except IndexError:
-            v = "∅"
-        return f"{{{self.snam[0:1]}{self.op} => {v}}}"
-
-    @property
-    def long(self):
-        try:
-            v = self.src[self.idx]
-        except IndexError:
-            v = "∅"
-        return f"{{{self.snam[0:1]}{self.op} => {v}}}"
-
     def __repr__(self):
-        return self.medium
+        try:
+            v = self.src[self.idx]
+        except IndexError:
+            v = "∅"
+        return f"{{{self.snam[0:1]}{self.op}:{v}}}"
 
 
 @v_args(inline=True)

@@ -42,14 +42,14 @@ def json1_fh(json1):
 
 @pytest.fixture(scope="module")
 def f1():
-    yield pdc.util.read_csv("t/asset/test1.csv", id=1)
+    yield pdc.util.read_csv("t/asset/test1.csv")
 
 
 @pytest.fixture(scope="module")
 def f2():
-    yield pdc.util.read_csv("t/asset/test2.csv", id=2)
+    yield pdc.util.read_csv("t/asset/test2.csv")
 
 
 @pytest.fixture(scope="module")
 def f3():
-    yield pdc.util.read_csv("t/asset/test3.csv", id=3)
+    yield pdc.util.read_csv("t/asset/test3.csv")
