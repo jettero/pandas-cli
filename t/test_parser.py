@@ -25,9 +25,9 @@ def test_kwargs(f1, f2):
 
 
 def test_kwargs(f1, f2, f3):
-    t = pdc.parser.parse("f1 + f2 @ var; t1 + f3", files=(f1, f2, f3))
+    pf = pdc.parser.parse("f1 + f2 @ var; t1 + f3", files=(f1, f2, f3))
 
-    assert t.args[1] is f3
+    assert t.args[1]() is f3
     assert t.kw == dict()
 
     assert t.args[0].args[0] is f1

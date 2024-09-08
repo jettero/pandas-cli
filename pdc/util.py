@@ -45,11 +45,12 @@ def read_csv(fname, headers=None, id=None):
     return File(id, fname, df)
 
 
-SAY_DEBUG = 0
-SAY_INFO = 1
-SAY_WARN = 2
-SAY_ERROR = 3
-SAY_WORDS = "DEBUG INFO WARN ERROR".split()
+SAY_TRACE = 0
+SAY_DEBUG = SAY_TRACE + 1
+SAY_INFO = SAY_DEBUG + 1
+SAY_WARN = SAY_INFO + 1
+SAY_ERROR = SAY_WARN + 1
+SAY_WORDS = "TRACE DEBUG INFO WARN ERROR".split()
 
 
 def set_say_level(x=None):
@@ -71,9 +72,13 @@ set_say_level()
 
 
 def say(*msg, level=SAY_INFO):
-    level = max(SAY_DEBUG, min(level, SAY_ERROR))
+    level = max(SAY_TRACE, min(level, SAY_ERROR))
     if level >= SAY_LEVEL:
         print(f"[{SAY_WORDS[level]}]", *msg, file=sys.stderr)
+
+
+def say_trace(*msg):
+    say(*msg, level=SAY_TRACE)
 
 
 def say_debug(*msg):

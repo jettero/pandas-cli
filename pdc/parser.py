@@ -3,7 +3,7 @@
 
 from collections import namedtuple
 from lark import Lark, Transformer, v_args
-from .util import File, say_debug
+from .util import File, say_debug, say_trace
 import pdc.op
 
 grammar = """
@@ -42,7 +42,7 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __repr__(self):
         f = self.fn
         fn = f"{f.__module__}.{f.__name__}"
-        return f"Call({fn}, {self.args!r}, {self.kw!r})"
+        return f"{fn}(*{self.args!r}, **{self.kw!r})"
 
 
 class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
@@ -56,13 +56,25 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
     def short(self):
         return f"{{{self.snam[0:1]}{self.op}}}"
 
-    def __repr__(self):
+    @property
+    def medium(self):
         try:
             v = self.src[self.idx]
-            return f"{{{v}}}"
+            return f"{v}"
         except IndexError:
             v = "∅"
         return f"{{{self.snam[0:1]}{self.op} => {v}}}"
+
+    @property
+    def long(self):
+        try:
+            v = self.src[self.idx]
+        except IndexError:
+            v = "∅"
+        return f"{{{self.snam[0:1]}{self.op} => {v}}}"
+
+    def __repr__(self):
+        return self.medium
 
 
 @v_args(inline=True)
@@ -109,7 +121,7 @@ class MacroTransformer(Transformer):
             op = 1
         idx = op - 1
         ret = Idx(op, idx, src_desc, src)
-        say_debug(f"MT::op_idx({src_desc[0:1]}{orig_op}) -> {ret}")
+        say_trace(f"MT::op_idx({src_desc[0:1]}{orig_op}) -> {ret}")
         return ret
 
     def tmp_bump(self):
