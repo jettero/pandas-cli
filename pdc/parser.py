@@ -3,7 +3,7 @@
 
 from collections import namedtuple
 from lark import Lark, Transformer, v_args
-from .util import File
+from .util import File, say_debug
 import pdc.op
 
 grammar = """
@@ -12,45 +12,63 @@ grammar = """
 %import common.WS
 %ignore WS
 
-start: texpr (";" texpr)*
-
-texpr: expr
+start: ((assign | implicit_assign) ";")* expr
 
 expr: operation | df
 
 operation: expr "+" expr opt* -> concat
+         | assign
+
+assign: (tmp|tmp_bump) "=" expr
+implicit_assign: expr
 
 opt: "@" CNAME -> key
    | "on" "(" CNAME ")" -> key
 
 df: file | tmp
 
-file: "f" NUMBER
-tmp: "t" NUMBER
+file: "f" NUMBER -> op_idx_files
+tmp: "t" NUMBER -> op_idx_tmp
+tmp_bump: "t+"
 """
 
 
 class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __call__(self):
         args = [x() if callable(x) else x for x in self.args]
-        print(f"WTF exec(*{self.args}, **{self.kw})")
-        return self.fn(*args, **self.kw)
+        kw = {k: v() if callable(v) else v for k, v in self.kw.items()}
+        return self.fn(*args, **kw)
 
     def __repr__(self):
-        return f"{self.fn.__module__}.{self.fn.__name__}(*{self.args!r}, **{self.kw!r})"
+        f = self.fn
+        fn = f"{f.__module__}.{f.__name__}"
+        return f"Call({fn}, {self.args!r}, {self.kw!r})"
 
 
-def _op_idx(op):
-    op = int(op)
-    idx = op - 1
-    return op, idx
+class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
+    def __call__(self):
+        try:
+            return self.src[self.idx]
+        except IndexError:
+            say_warn(f"{self} points to nothing")
+
+    @property
+    def short(self):
+        return f"{{{self.snam[0:1]}{self.op}}}"
+
+    def __repr__(self):
+        try:
+            v = self.src[self.idx]
+            return f"{{{v}}}"
+        except IndexError:
+            v = "∅"
+        return f"{{{self.snam[0:1]}{self.op} => {v}}}"
 
 
 @v_args(inline=True)
 class MacroTransformer(Transformer):
-    def __init__(self, resolv_tmp=True):
-        self.resolv_tmp = resolv_tmp
-        self.tmp_items = list()
+    def __init__(self):
+        self.tmpvz = list()
         self.files = list()
 
     def start(self, *op):
@@ -60,46 +78,75 @@ class MacroTransformer(Transformer):
         return ("key", str(name))
 
     def concat(self, op1, op2, *opt):
-        for o in opt:
-            print(f"WTF( {o!r} )")
         args = (op1, op2)
         kw = {k: v for o in opt for k, v in zip(o[::2], o[1::2])}
         c = Call(pdc.op.concat, (op1, op2), kw)
-        print(f"WTF {c!r}")
+        say_debug(f"MT::concat({op1.short}, {op2.short}, {opt!r}) -> {c}")
         return c
 
-    def file(self, op):
-        op, idx = _op_idx(op)
-        return self.files[idx]
+    @property
+    def tid(self):
+        return len(self.tmpvz)
 
-    def tmp(self, op=None):
-        if op is None:
-            op = len(self.tmp_items)
-        op, idx = _op_idx(op)
-        if self.resolv_tmp:
-            return self.tmp_items[idx]
-        return ("tmp", op, self.tmp_items[idx])
+    def op_idx_files(self, op):
+        return self.op_idx(op, self.files)
+
+    def op_idx_tmp(self, op):
+        return self.op_idx(op, self.tmpvz)
+
+    def op_idx(self, op, src=None):
+        orig_op = op
+        if src is None:
+            src = self.tmpvz
+        if src is self.tmpvz:
+            src_desc = "tmpvz"
+        elif src is self.files:
+            src_desc = "files"
+        else:
+            src_desc = "?????"
+        op = len(src) + 1 if op in ("+", "-", "") else int(op)
+        if op < 1:
+            op = 1
+        idx = op - 1
+        ret = Idx(op, idx, src_desc, src)
+        say_debug(f"MT::op_idx({src_desc[0:1]}{orig_op}) -> {ret}")
+        return ret
+
+    def tmp_bump(self):
+        return self.op_idx_tmp("+")
+
+    def tmp(self, op):
+        t = self.op_idx_tmp(op)
+        return t
+
+    def file(self, op):
+        return self.op_idx(op, src=self.files)
 
     def df(self, op):
         return op
 
     def expr(self, op):
+        say_debug(f"MT::expr(op={op})")
         return op
 
-    def assign(self, val):
-        self.tmp_items.append(val)
-        return self.tmp()
+    def implicit_assign(self, op2):
+        say_debug(f"MT::implicit_assign({op2})")
+        t = self.tmp_bump()
+        return self.assign(t, op2)
 
-    def texpr(self, op):
-        return self.assign(op)
+    def assign(self, op1, op2):
+        while len(op1.src) < op1.op:
+            op1.src.append(None)
+        op1.src[op1.idx] = op2
+        say_debug(f"MT::assign({op1.short}, {op2}) -> {op1}")
+        return op1
 
 
 transformer = MacroTransformer()
 parser = Lark(grammar, parser="lalr", transformer=transformer)
 
 
-def parse(statement="r(f*: a+b)", files=None, resolv_tmp=True):
-    transformer.resolv_tmp = resolv_tmp
+def parse(statement="r(f*: a+b)", files=None):
     for item in files:
         if not isinstance(item, File):
             raise ValueError(f"{item} is an invalid pdc.File argument")
