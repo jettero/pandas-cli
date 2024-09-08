@@ -49,12 +49,43 @@ SAY_DEBUG = 0
 SAY_INFO = 1
 SAY_WARN = 2
 SAY_ERROR = 3
-SAY_LEVEL = SAY_INFO
-
 SAY_WORDS = "DEBUG INFO WARN ERROR".split()
+
+
+def set_say_level(x=None):
+    global SAY_LEVEL
+    try:
+        x = x or os.environ["PDC_LOG_LEVEL"].upper()
+        x = SAY_WORDS.index(x) if x in SAY_WORDS else int(x)
+        SAY_LEVEL = max(SAY_DEBUG, min(x, SAY_ERROR))
+    except (KeyError, ValueError):
+        SAY_LEVEL = SAY_ERROR
+    return SAY_LEVEL
+
+
+set_say_level()
 
 
 def say(*msg, level=SAY_INFO):
     level = max(SAY_DEBUG, min(level, SAY_ERROR))
     if level >= SAY_LEVEL:
         print(f"[{SAY_WORDS[level]}]", *msg, file=sys.stderr)
+
+
+def say_debug(*msg):
+    say(*msg, level=SAY_DEBUG)
+
+
+def say_info(*msg):
+    say(*msg, level=SAY_INFO)
+
+
+def say_warn(*msg):
+    say(*msg, level=SAY_WARN)
+
+
+say_warning = say_warn
+
+
+def say_error(*msg):
+    say(*msg, level=SAY_ERROR)
