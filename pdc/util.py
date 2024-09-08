@@ -55,8 +55,12 @@ SAY_WORDS = "DEBUG INFO WARN ERROR".split()
 def set_say_level(x=None):
     global SAY_LEVEL
     try:
-        x = x or os.environ["PDC_LOG_LEVEL"].upper()
-        x = SAY_WORDS.index(x) if x in SAY_WORDS else int(x)
+        x = x if x is not None else os.environ["PDC_LOG_LEVEL"]
+        try:
+            x = x.upper()
+            x = SAY_WORDS.index(x)
+        except (ValueError, AttributeError):
+            x = int(x)
         SAY_LEVEL = max(SAY_DEBUG, min(x, SAY_ERROR))
     except (KeyError, ValueError):
         SAY_LEVEL = SAY_ERROR
