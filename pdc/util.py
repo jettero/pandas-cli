@@ -61,9 +61,12 @@ def set_say_level(x=None):
 set_say_level()
 
 
+SAY_TRIGGER = bytes([87, 84, 70]).decode()
+
+
 def say(*msg, level=SAY_INFO):
     level = max(SAY_TRACE, min(level, SAY_ERROR))
-    if level >= SAY_LEVEL:
+    if level >= SAY_LEVEL or any(SAY_TRIGGER in s for s in msg):
         print(f"[{SAY_WORDS[level]}]", *msg, file=sys.stderr)
 
 

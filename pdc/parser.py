@@ -16,14 +16,16 @@ start: ((assign | implicit_assign) ";")* expr
 
 expr: operation | df
 
-operation: expr "+" expr opt* -> concat
+operation: expr "+" expr options -> concat
          | assign
 
 assign: (tmp|tmp_bump) "=" expr
 implicit_assign: expr
 
-opt: "@" CNAME -> key
-   | "on" "(" CNAME ")" -> key
+opt: "@"      CNAME ("," CNAME)* -> key
+   | "on" "(" CNAME ("," CNAME)* ")" -> key
+
+options: opt*
 
 df: file | tmp
 
@@ -35,6 +37,7 @@ tmp_bump: "t+"
 
 class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __call__(self):
+        say_trace(f"Call(): {self}")
         args = [x() if callable(x) else x for x in self.args]
         kw = {k: v() if callable(v) else v for k, v in self.kw.items()}
         return self.fn(*args, **kw)
@@ -47,10 +50,18 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
 
 class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
     def __call__(self):
+        say_trace(f"Idx(): {self}")
         try:
-            return self.src[self.idx]
+            res = self.src[self.idx]
+            if callable(res):
+                return res()
+            return res
         except IndexError:
             say_warn(f"{self} points to nothing")
+
+    @property
+    def deref(self):
+        return self.src[self.idx]
 
     @property
     def short(self):
@@ -73,13 +84,19 @@ class MacroTransformer(Transformer):
     def start(self, *op):
         return op[-1]
 
-    def key(self, name):
-        return ("key", str(name))
+    def key(self, *op):
+        say_trace(f"MT::key({op!r})")
+        return "key", set(str(o) for o in op)
 
-    def concat(self, op1, op2, *opt):
-        args = (op1, op2)
-        kw = {k: v for o in opt for k, v in zip(o[::2], o[1::2])}
-        c = Call(pdc.op.concat, (op1, op2), kw)
+    def options(self, *op):
+        say_trace(f"MT::options({op!r})")
+        kw = dict()
+        for k, v in op:
+            kw[k] = kw[k] | v if k in kw else v
+        return kw
+
+    def concat(self, op1, op2, opt):
+        c = Call(pdc.op.concat, (op1, op2), opt)
         say_debug(f"MT::concat({op1.short}, {op2.short}, {opt!r}) -> {c}")
         return c
 
