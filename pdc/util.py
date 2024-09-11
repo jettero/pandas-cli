@@ -5,6 +5,9 @@ from collections import namedtuple
 
 
 class File(namedtuple("File", ["fname", "df"])):
+    def __len__(self):
+        return len(self.df)
+
     def __repr__(self):
         return f"<{os.path.basename(self.fname)}>"
 

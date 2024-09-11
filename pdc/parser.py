@@ -40,7 +40,8 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
         say_trace(f"Call(): {self}")
         args = [x() if callable(x) else x for x in self.args]
         kw = {k: v() if callable(v) else v for k, v in self.kw.items()}
-        return self.fn(*args, **kw)
+        name = " ".join([self.fn.__name__, *(str(x) for x in args)])
+        return File(name, self.fn(*args, **kw))
 
     def __repr__(self):
         f = self.fn

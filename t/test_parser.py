@@ -14,7 +14,7 @@ def test_simple_concat(f1, f2):
 
     df = pf()
 
-    assert len(f1.df) + len(f2.df) == len(df)
+    assert len(f1) + len(f2) == len(df)
 
 
 def test_kwargs(f1, f2):
@@ -34,3 +34,9 @@ def test_kwargs(f1, f2, f3):
     assert ipf.args[0].deref is f1
     assert ipf.args[1].deref is f2
     assert ipf.kw == dict(key=set(["var"]))
+
+    df = pf()
+
+    duplicate_var_count = 1
+
+    assert len(f1) + len(f2) + len(f3) == len(df) + duplicate_var_count
