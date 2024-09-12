@@ -23,3 +23,6 @@ __pycache__
 /dist
 /build
 /pdc/version.py
+
+# other cruft
+/.coverage
