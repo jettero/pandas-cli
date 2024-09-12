@@ -13,19 +13,22 @@ dependencies = [
     'simplejson',
     'lark',
 ]
+optional-dependencies.test = [
+    "pytest",
+    "pytest-cov"
+]
+urls.github= "https://github.com/jettero/pandas-cli.git"
+scripts.pd-thing = "pdc.cmd:entry_point"
 
 [build-system]
-requires = ["setuptools", "setuptools_scm[toml]"]
+requires = ["setuptools", "setuptools_scm[toml]", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-write_to = "pdc/version.py"
+[tool]
+setuptools_scm.write_to = "pdc/version.py"
+setuptools.packages = ["pdc"]
 
-[project.scripts]
-jpd = "pdc.cmd:entry_point"
-
-[project.urls]
-Github = "https://github.com/jettero/pandas-cli.git"
-
-[tool.setuptools]
-packages = ["pdc"]
+[tool.pytest.ini_options]
+testpaths = "t"
+addopts = "--ff --show-capture=stderr --maxfail=1 --cov-report term-missing:skip-covered --no-cov-on-fail --cov-fail-under 100"
+log_cli_format = "%(asctime)s %(name)17s %(levelname)5s %(message)s"
