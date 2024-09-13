@@ -6,7 +6,10 @@ import pandas as pd
 from collections import namedtuple
 
 
-class File(namedtuple("File", ["fname", "df"])):
+class File(namedtuple("File", ["fname", "df", "flags"])):
+    def __new__(cls, *a, **kw):
+        return super().__new__(cls, *a, kw)
+
     def __len__(self):
         return len(self.df)
 
@@ -29,15 +32,20 @@ def special_list_sort(*args):
 
 
 def read_csv(fname, headers=None):
-    if headers is None:
+    if headers is None or headers is True or headers is False:
         df = pd.read_csv(fname)
+        return File(fname, df)
+
+    if isinstance(headers, pd.DataFrame):
+        headers = headers.columns.tolist()
+    elif isinstance(headers, File):
+        headers = headers.df.columns.tolist()
+    elif isinstance(headers, (tuple, list)):
+        pass
     else:
-        if isinstance(headers, pd.DataFrame):
-            headers = df.columns.tolist()
-        elif isinstance(headers, File):
-            headers = headers.df.columns.tolist()
-        df = pd.read_csv(fname, header=None, names=headers)
-    return File(fname, df)
+        raise ValueError(f"headers={headers!r} should be a DataFrame, pdc.File, or tuple/list")
+    df = pd.read_csv(fname, header=None, names=headers)
+    return File(fname, df, derived_headers=True)
 
 
 SAY_TRACE = 0

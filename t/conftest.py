@@ -3,11 +3,14 @@
 
 import os
 import pytest
+from glob import glob
 
 import pdc.util
 
 from t.bin.gen_csv import main as gen_csv
 from t.bin.gen_json import main as gen_json
+
+TA_TEST = glob("t/asset/test*.csv")
 
 
 @pytest.fixture
@@ -40,15 +43,22 @@ def json1_fh(json1):
     yield from _fh(json1)
 
 
-file_dir = "t/asset"
-file_names = [
-    (file.split(".")[0], os.path.join(root, file))
-    for root, _, files in os.walk(file_dir)
-    for file in files
-    if file.startswith("test") and file.endswith(".csv")
-]
+@pytest.fixture(scope="module", params=TA_TEST)
+def ta_test_fname(request):
+    yield request.param
 
-for i, (fname, path) in enumerate(file_names, start=1):
+
+@pytest.fixture(scope="module")
+def ta_test(ta_test_fname):
+    yield pdc.util.read_csv(ta_test_fname)
+
+
+@pytest.fixture(scope="module")
+def ta_test_all():
+    yield tuple(pdc.util.read_csv(x) for x in TA_TEST)
+
+
+for i, path in enumerate(TA_TEST, start=1):
 
     def fixture_func(file=path):
         @pytest.fixture(scope="module")
@@ -57,14 +67,6 @@ for i, (fname, path) in enumerate(file_names, start=1):
 
         return _fixture
 
+    fname = os.path.basename(path).split(".")[0]
+    fixture_func.__name__ = fname
     globals()[f"ta_{fname}"] = fixture_func()
-
-
-@pytest.fixture(scope="module")
-def tassets():
-    return tuple(pdc.util.read_csv(x) for _, x in file_names)
-
-
-@pytest.fixture(scope="module", params=file_names)
-def passets(request):
-    yield pdc.util.read_csv(request.param[1])
