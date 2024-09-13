@@ -4,9 +4,9 @@
 import pdc.op
 
 
-def test_concat(f1, f2, f3):
+def test_concat(tassets):
     vv = dict()
-    for F in f1, f2, f3:
+    for F in tassets:
         for _, row in F.df.iterrows():
             k, v = row["var"], row["val"]
             if k in vv:
@@ -14,7 +14,7 @@ def test_concat(f1, f2, f3):
             else:
                 vv[k] = [v]
 
-    df = pdc.op.concat(f1, f2, f3)
+    df = pdc.op.concat(*tassets)
     for _, row in df.iterrows():
         k, v = row["var"], row["val"]
         assert v in vv[k]

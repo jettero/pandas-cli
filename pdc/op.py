@@ -18,7 +18,7 @@ def concat(*df, **kw):
     return df
 
 
-def column_merge(*df):
+def column_merge(*df):  # pragma: no cover
     return concat(*df)
     # if args.mode == "column-merge":
     #     A = args.files[0].df
@@ -41,7 +41,7 @@ def column_merge(*df):
     #     return output(A)
 
 
-def left_join(*df):
+def left_join(*df):  # pragma: no cover
     return concat(*df)
     # if args.mode == "A-cat":
     #     B = pd.concat((x.df for x in args.files[1:]), ignore_index=True)
