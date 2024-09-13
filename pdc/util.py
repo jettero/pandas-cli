@@ -2,8 +2,8 @@
 
 import os
 import sys
-import pandas as pd
 from collections import namedtuple
+import pandas as pd
 
 
 class File(namedtuple("File", ["fname", "df", "flags"])):
@@ -53,6 +53,7 @@ SAY_DEBUG = SAY_TRACE + 1
 SAY_INFO = SAY_DEBUG + 1
 SAY_WARN = SAY_INFO + 1
 SAY_ERROR = SAY_WARN + 1
+SAY_LEVEL = SAY_ERROR
 SAY_WORDS = "TRACE DEBUG INFO WARN ERROR".split()
 
 

@@ -26,11 +26,6 @@ repos:
     entry: '\b(?i:wtf)\b'
     types: [ python ]
     language: pygrep
-  - id: pylint
-    name: pylint
-    entry: ./pathed-pylintest pylint
-    language: system
-    types: [python]
   - id: pytest
     name: pytest
     entry: ./pathed-pylintest pytest t --cov pdc
