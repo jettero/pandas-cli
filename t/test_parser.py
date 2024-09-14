@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import pytest
 import pdc.op
 import pdc.parser
 
@@ -40,3 +41,8 @@ def test_kwargs(ta_test1, ta_test2, ta_test3):
     duplicate_var_count = 1
 
     assert len(ta_test1) + len(ta_test2) + len(ta_test3) == len(df) + duplicate_var_count
+
+
+def test_file_fail():
+    with pytest.raises(ValueError):
+        pdc.parser.parse("f1 + f2", files=(3, 4, 5))

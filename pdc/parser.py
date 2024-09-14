@@ -3,7 +3,7 @@
 
 from collections import namedtuple
 from lark import Lark, Transformer, v_args
-from .util import File, say_debug, say_trace
+from .util import File, say_debug, say_trace, say_error
 import pdc.op
 
 grammar = """
@@ -29,8 +29,8 @@ options: opt*
 
 df: file | tmp
 
-file: "f" NUMBER -> op_idx_files
-tmp: "t" NUMBER -> op_idx_tmp
+file: "f" NUMBER
+tmp: "t" NUMBER
 tmp_bump: "t+"
 """
 
@@ -58,7 +58,7 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
                 return res()
             return res
         except IndexError:
-            say_warn(f"{self} points to nothing")
+            say_error(f"{self} points to nothing")
 
     @property
     def deref(self):
@@ -101,16 +101,6 @@ class MacroTransformer(Transformer):
         say_debug(f"MT::concat({op1.short}, {op2.short}, {opt!r}) -> {c}")
         return c
 
-    @property
-    def tid(self):
-        return len(self.tmpvz)
-
-    def op_idx_files(self, op):
-        return self.op_idx(op, self.files)
-
-    def op_idx_tmp(self, op):
-        return self.op_idx(op, self.tmpvz)
-
     def op_idx(self, op, src=None):
         orig_op = op
         if src is None:
@@ -130,11 +120,10 @@ class MacroTransformer(Transformer):
         return ret
 
     def tmp_bump(self):
-        return self.op_idx_tmp("+")
+        return self.op_idx("+")
 
     def tmp(self, op):
-        t = self.op_idx_tmp(op)
-        return t
+        return self.op_idx(op, src=self.tmpvz)
 
     def file(self, op):
         return self.op_idx(op, src=self.files)

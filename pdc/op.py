@@ -6,6 +6,12 @@ from .util import File, say_trace
 
 
 def concat(*df, **kw):
+    #  aaa   bbb   aaa
+    #  aaa + bbb = aaa
+    #  aaa   bbb   aaa
+    #              bbb
+    #              bbb
+    #              bbb
     if not kw:
         kw["ignore_index"] = True
     say_trace(f"OP::concat(*{df!r}, **{kw!r})")
@@ -18,7 +24,10 @@ def concat(*df, **kw):
     return df
 
 
-def column_merge(*df):  # pragma: no cover
+def transpocat(*df):  # pragma: no cover
+    #  aaa   bbb   aaabbb
+    #  aaa + bbb = aaabbb
+    #  aaa   bbb   aaabbb
     return concat(*df)
     # if args.mode == "column-merge":
     #     A = args.files[0].df
@@ -41,7 +50,10 @@ def column_merge(*df):  # pragma: no cover
     #     return output(A)
 
 
-def left_join(*df):  # pragma: no cover
+def filter(*df):  # pragma: no cover
+    #  axy   def   axy
+    #  bwj - ghi = ckl
+    #  ckl   baz
     return concat(*df)
     # if args.mode == "A-cat":
     #     B = pd.concat((x.df for x in args.files[1:]), ignore_index=True)
