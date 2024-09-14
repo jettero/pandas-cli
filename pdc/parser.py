@@ -38,10 +38,9 @@ tmp_bump: "t+"
 class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __call__(self):
         say_trace(f"Call(): {self}")
-        args = [x() if callable(x) else x for x in self.args]
-        kw = {k: v() if callable(v) else v for k, v in self.kw.items()}
+        args = [x().df for x in self.args]
         name = " ".join([self.fn.__name__, *(str(x) for x in args)])
-        return File(name, self.fn(*args, **kw))
+        return File(name, self.fn(*args, **self.kw))
 
     def __repr__(self):
         f = self.fn
@@ -54,7 +53,7 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
         say_trace(f"Idx(): {self}")
         try:
             res = self.src[self.idx]
-            if callable(res):
+            if isinstance(res, (Call, Idx)):
                 return res()
             return res
         except IndexError:

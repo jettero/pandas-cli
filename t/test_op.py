@@ -14,7 +14,7 @@ def test_concat(ta_test_all):
             else:
                 vv[k] = [v]
 
-    df = pdc.op.concat(*ta_test_all)
+    df = pdc.op.concat(*(x.df for x in ta_test_all))
     for _, row in df.iterrows():
         k, v = row["var"], row["val"]
         assert v in vv[k]

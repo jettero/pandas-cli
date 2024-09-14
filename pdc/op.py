@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import pandas as pd
-from .util import File, say_trace
 
 
 def concat(*df, **kw):
@@ -14,11 +13,10 @@ def concat(*df, **kw):
     #              bbb
     if not kw:
         kw["ignore_index"] = True
-    say_trace(f"OP::concat(*{df!r}, **{kw!r})")
     dedup = False
     if "key" in kw:
         dedup = kw.pop("key")
-    df = pd.concat((x.df if isinstance(x, File) else x for x in df), **kw)
+    df = pd.concat(df, **kw)
     if dedup:
         df = df.drop_duplicates(subset=tuple(dedup), keep="last")
     return df
