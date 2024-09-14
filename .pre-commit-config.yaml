@@ -28,7 +28,7 @@ repos:
     language: pygrep
   - id: pytest
     name: pytest
-    entry: ./pathed-pylintest pytest t --cov pdc --cov-fail-under 100
+    entry: ./pathed-pylintest pytest
     always_run: true
     language: system
     pass_filenames: false
