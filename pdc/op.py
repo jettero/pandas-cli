@@ -17,6 +17,8 @@ def concat(*df, **kw):
     if "key" in kw:
         dedup = kw.pop("key")
     df = pd.concat(df, **kw)
+    # NOTE: concat() is different than a join, if we do want to use the key for
+    # left/inner/right join behavior then it's really a dedup after the fact.
     if dedup:
         df = df.drop_duplicates(subset=tuple(dedup), keep="last")
     return df
