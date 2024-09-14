@@ -28,3 +28,7 @@ build-backend = "setuptools.build_meta"
 setuptools_scm.write_to = "pdc/version.py"
 setuptools.packages = ["pdc"]
 coverage.run.omit = ["pdc/version.py"]
+
+[tool.pytest.ini_options]
+testpaths = [ "t" ]
+addopts = "--ff --show-capture=stderr --maxfail 1 --cov-report term-missing:skip-covered --no-cov-on-fail --cov-fail-under 100 --cov pdc"
