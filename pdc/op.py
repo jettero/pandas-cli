@@ -2,6 +2,9 @@
 # coding: utf-8
 
 import pandas as pd
+from .util import say_warn
+
+DING_DING_DING = "\x07\x07\x07"  # ding ding ding
 
 
 def concat(*df, **kw):
@@ -24,37 +27,25 @@ def concat(*df, **kw):
     return df
 
 
-def transpocat(*df):  # pragma: no cover
+def transpocat(A, B, key=None, merge_type="outer"):
     #  aaa   bbb   aaabbb
     #  aaa + bbb = aaabbb
     #  aaa   bbb   aaabbb
-    return concat(*df)
-    # if args.mode == "column-merge":
-    #     A = args.files[0].df
-    #     k = args.unique
-    #     if not args.unique:
-    #         qprint(f"key columns unspecified, guessing")
-    #         k = [x for x in HEADERS if x.endswith("id")]
-    #         if not k:
-    #             k = HEADERS
-    #     qprint(f"merging all columns (keyed on {'-'.join(sorted(k))}) starting with {args.files[0].fname}")
-    #     DING_DING_DING = "\x07\x07\x07"  # ding ding ding
-    #     for fname, B in args.files[1:]:
-    #         qprint(f"  merge in the columns of {fname}")
-    #         A = pd.merge(A, B, on=k, suffixes=("", DING_DING_DING), how=args.merge_type)
-    #         c = A.columns.tolist()
-    #         d = [x for x in c if f"{x}{DING_DING_DING}" in c]
-    #         for lhs in d:
-    #             A[lhs] = A[lhs].combine_first(A[f"{lhs}{DING_DING_DING}"])
-    #         A = A.drop(columns=[f"{x}{DING_DING_DING}" for x in d])
-    #     return output(A)
+    if key is None:
+        k = A.columns.tolist()
+    A = pd.merge(A, B, on=key, suffixes=("", DING_DING_DING), how=merge_type)
+    c = A.columns.tolist()
+    d = [x for x in c if f"{x}{DING_DING_DING}" in c]
+    for lhs in d:
+        A[lhs] = A[lhs].combine_first(A[f"{lhs}{DING_DING_DING}"])
+    return A.drop(columns=[f"{x}{DING_DING_DING}" for x in d])
 
 
-def filter(*df):  # pragma: no cover
+def filter(*df, **kw):  # pragma: no cover
     #  axy   def   axy
     #  bwj - ghi = ckl
     #  ckl   baz
-    return concat(*df)
+    return concat(*df, **kw)
     # if args.mode == "A-cat":
     #     B = pd.concat((x.df for x in args.files[1:]), ignore_index=True)
     #     A = args.files[0].df
