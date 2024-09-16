@@ -7,23 +7,18 @@ from .util import say_warn
 DING_DING_DING = "\x07\x07\x07"  # ding ding ding
 
 
-def concat(*df, **kw):
+def concat(A, B, key=None):
     #  aaa   bbb   aaa
     #  aaa + bbb = aaa
     #  aaa   bbb   aaa
     #              bbb
     #              bbb
     #              bbb
-    if not kw:
-        kw["ignore_index"] = True
-    dedup = False
-    if "key" in kw:
-        dedup = kw.pop("key")
-    df = pd.concat(df, **kw)
+    df = pd.concat((A, B), ignore_index=True)
     # NOTE: concat() is different than a join, if we do want to use the key for
     # left/inner/right join behavior then it's really a dedup after the fact.
-    if dedup:
-        df = df.drop_duplicates(subset=tuple(dedup), keep="last")
+    if key is not None:
+        return df.drop_duplicates(subset=(key if isinstance(key, (list, tuple)) else tuple(key)), keep="last")
     return df
 
 
