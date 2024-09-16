@@ -3,6 +3,8 @@
 
 import pdc.op
 
+# NOTE: we're mostly testing below to make sure these work without crashing.
+# we should also make some accuracy tests...
 
 def test_concat(ta_test_all):
     vv = dict()
@@ -22,15 +24,20 @@ def test_concat(ta_test_all):
         assert v in vv[k]
 
 
-def test_merge_specified(ta_test1, ta_test2):
+def test_transpocat(ta_test1, ta_test2):
     df = pdc.op.transpocat(ta_test1.df, ta_test2.df, key="var", merge_type="outer")
     c = df.columns.tolist()
 
     assert c == ["var", "val", "ext"]
 
-
-def test_merge_unspecified(ta_test1, ta_test2):
-    df = pdc.op.transpocat(ta_test1.df, ta_test2.df, merge_type="outer")
+    df = pdc.op.transpocat(ta_test1.df, ta_test2.df)
     c = df.columns.tolist()
 
     assert c == ["var", "val", "ext"]
+
+def test_filter(ta_test1, ta_test2):
+    df = pdc.op.filter(ta_test1.df, ta_test2.df, key="var")
+    ldf = len(df)
+    lta = len(ta_test1.df)
+
+    assert ldf == lta -1
