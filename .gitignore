@@ -1,20 +1,12 @@
-# some datatypes we test on
-*.csv
-*.tsv
-*.json
-
-# some other typical test files to ignore
+# don't accidentally track stray one-off test files and other spam
+/*.csv
+/*.tsv
+/*.json
 /blah*
 /file*
 
 # escaped test files might show up here
 /t/output
-
-# we want to keep otherwise ignored items here
-!/t/asset/*
-
-# people using the makefile might generate these silly things
-/.req.*
 
 # python cruft and other build stuff
 *.pyc
@@ -23,7 +15,5 @@ __pycache__
 /dist
 /build
 /pdc/version.py
-
-# other cruft
 /.coverage
 /.pathed-run.log
