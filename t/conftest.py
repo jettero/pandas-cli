@@ -10,8 +10,10 @@ import pdc.util
 from t.bin.gen_csv import main as gen_csv
 from t.bin.gen_json import main as gen_json
 
-TA_TEST = glob("t/asset/test*.csv")
+TA_TEST = tuple(glob("t/asset/test*.csv"))
+TA_OTHER = tuple(sorted(set(glob("t/asset/*.csv")) - set(TA_TEST)))
 
+__all__ = ['TA_TEST', 'TA_OTHER']
 
 @pytest.fixture
 def csv1(filename="t/output/1.csv"):
@@ -58,15 +60,19 @@ def ta_test_all():
     yield tuple(pdc.util.read_csv(x) for x in TA_TEST)
 
 
-for i, path in enumerate(TA_TEST, start=1):
+def gen_ta_fixtures():
+    for path in TA_TEST + TA_OTHER:
 
-    def fixture_func(file=path):
-        @pytest.fixture(scope="module")
-        def _fixture():
-            return pdc.util.read_csv(file)
+        def fixture_func(file=path):
+            @pytest.fixture(scope="module")
+            def _fixture():
+                yield pdc.util.read_csv(file)
 
-        return _fixture
+            return _fixture
 
-    fname = os.path.basename(path).split(".")[0]
-    fixture_func.__name__ = fname
-    globals()[f"ta_{fname}"] = fixture_func()
+        fname = os.path.basename(path).split(".")[0]
+        fixture_func.__name__ = fname
+        globals()[f := f"ta_{fname}"] = fixture_func()
+        __all__.append(f)
+
+gen_ta_fixtures()

@@ -26,7 +26,7 @@ def concat(A, B, key=None):
     elif isinstance(key, str):
         key = [key]
     else:
-        ValueError(f'key={key} is invalid. should be a tuple of strings or something')
+        raise ValueError(f'key={key} is invalid. should be a tuple of strings or something')
     return df.drop_duplicates(subset=key, keep="last")
 
 
@@ -43,7 +43,7 @@ def transpocat(A, B, key=None, merge_type="outer"):
     elif isinstance(key, str):
         key = [key]
     else:
-        ValueError(f'key={key} is invalid. should be a tuple of strings or something')
+        raise ValueError(f'key={key} is invalid. should be a tuple of strings or something')
     A = pd.merge(A, B, on=key, suffixes=("", DING_DING_DING), how=merge_type)
     c = A.columns.tolist()
     d = [x for x in c if f"{x}{DING_DING_DING}" in c]
@@ -64,7 +64,7 @@ def filter(A, B, key=None):
     elif isinstance(key, str):
         key = [key]
     else:
-        ValueError(f'key={key} is invalid. should be a tuple of strings or something')
+        raise ValueError(f'key={key} is invalid. should be a tuple of strings or something')
     A["unique_key"] = A[key].apply(tuple, axis=1)
     B["unique_key"] = B[key].apply(tuple, axis=1)
     return A[~A.unique_key.isin(B.unique_key)].drop(columns="unique_key")

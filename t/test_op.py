@@ -1,43 +1,41 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import pytest
 import pdc.op
 
-# NOTE: we're mostly testing below to make sure these work without crashing.
-# we should also make some accuracy tests...
+def df_zipper(*df):
+    yield from zip(*(sorted(x.to_records(index=False).tolist()) for x in df))
 
-def test_concat(ta_test_all):
-    vv = dict()
-    for F in ta_test_all:
-        for _, row in F.df.iterrows():
-            k, v = row["var"], row["val"]
-            if k in vv:
-                vv[k].append(v)
-            else:
-                vv[k] = [v]
+def test_concat_without_key(ta_test1, ta_test2, ta_t1Ct2):
+    df = pdc.op.concat(ta_test1.df, ta_test2.df)
+    for lhs, rhs in df_zipper(df, ta_t1Ct2.df):
+        assert lhs == rhs
 
-    df = ta_test_all[0].df
-    for ta in ta_test_all[1:]:
-        df = pdc.op.concat(df, ta.df)
-    for _, row in df.iterrows():
-        k, v = row["var"], row["val"]
-        assert v in vv[k]
+def test_concat_with_key(ta_test1, ta_test2, ta_t1Ct2Kvar):
+    for k in ("var", ("var",), ["var"]):
+        df = pdc.op.concat(ta_test1.df, ta_test2.df, key=k)
+        for lhs, rhs in df_zipper(df, ta_t1Ct2Kvar.df):
+            assert lhs == rhs
 
+    with pytest.raises(ValueError):
+        pdc.op.concat(ta_test1.df, ta_test2.df, key=(x for x in range(10)))
 
-def test_transpocat(ta_test1, ta_test2):
-    df = pdc.op.transpocat(ta_test1.df, ta_test2.df, key="var", merge_type="outer")
-    c = df.columns.tolist()
+def test_transpocat_with_args(ta_test1, ta_test2, ta_t1TCt2Kvar):
+    for k in ("var", ("var",), ["var"]):
+        df = pdc.op.transpocat(ta_test1.df, ta_test2.df, key=k, merge_type="outer")
+        for lhs, rhs in df_zipper(df, ta_t1TCt2Kvar.df):
+            assert lhs == rhs
 
-    assert c == ["var", "val", "ext"]
-
+def test_transpocat_without_args(ta_test1, ta_test2, ta_t1TCt2):
     df = pdc.op.transpocat(ta_test1.df, ta_test2.df)
-    c = df.columns.tolist()
+    for lhs, rhs in df_zipper(df, ta_t1TCt2.df):
+        assert lhs == rhs
 
-    assert c == ["var", "val", "ext"]
 
 def test_filter(ta_test1, ta_test2):
     df = pdc.op.filter(ta_test1.df, ta_test2.df, key="var")
     ldf = len(df)
     lta = len(ta_test1.df)
 
-    assert ldf == lta -1
+    assert ldf == lta - 1
