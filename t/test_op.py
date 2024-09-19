@@ -3,10 +3,7 @@
 
 import pytest
 import pdc.op
-
-
-def df_zipper(*df):
-    yield from zip(*(sorted(x.to_records(index=False).tolist()) for x in df))
+from pdc.util import df_zipper
 
 
 def test_concat_without_key(ta_test1, ta_test2, ta_t1Ct2):

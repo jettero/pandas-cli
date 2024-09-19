@@ -17,6 +17,7 @@ start: ((assign | implicit_assign) ";")* expr
 expr: operation | df
 
 operation: expr "+" expr options -> concat
+         | expr "-" expr options -> filter
          | assign
 
 assign: (tmp|tmp_bump) "=" expr
@@ -98,6 +99,11 @@ class MacroTransformer(Transformer):
     def concat(self, op1, op2, opt):
         c = Call(pdc.op.concat, (op1, op2), opt)
         say_debug(f"MT::concat({op1.short}, {op2.short}, {opt!r}) -> {c}")
+        return c
+
+    def filter(self, op1, op2, opt):
+        c = Call(pdc.op.filter, (op1, op2), opt)
+        say_debug(f"MT::filter({op1.short}, {op2.short}, {opt!r}) -> {c}")
         return c
 
     def op_idx(self, op, src=None):

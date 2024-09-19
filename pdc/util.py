@@ -6,6 +6,17 @@ from collections import namedtuple
 import pandas as pd
 
 
+def df_sorted_records(*df):
+    for item in df:
+        if isinstance(item, File):
+            item = item.df
+        yield sorted(item.to_records(index=False).tolist())
+
+
+def df_zipper(*df):
+    yield from zip(*df_sorted_records(*df))
+
+
 class File(namedtuple("File", ["fname", "df", "flags"])):
     def __new__(cls, *a, **kw):
         return super().__new__(cls, *a, kw)

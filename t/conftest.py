@@ -13,7 +13,8 @@ from t.bin.gen_json import main as gen_json
 TA_TEST = tuple(glob("t/asset/test*.csv"))
 TA_OTHER = tuple(sorted(set(glob("t/asset/*.csv")) - set(TA_TEST)))
 
-__all__ = ['TA_TEST', 'TA_OTHER']
+__all__ = ["TA_TEST", "TA_OTHER"]
+
 
 @pytest.fixture
 def csv1(filename="t/output/1.csv"):
@@ -71,8 +72,10 @@ def gen_ta_fixtures():
             return _fixture
 
         fname = os.path.basename(path).split(".")[0]
-        fixture_func.__name__ = fname
-        globals()[f := f"ta_{fname}"] = fixture_func()
-        __all__.append(f)
+        ff = fixture_func()
+        ff.__name__ = fname
+        globals()[ta_fname := f"ta_{fname}"] = ff
+        __all__.append(ta_fname)
+
 
 gen_ta_fixtures()
