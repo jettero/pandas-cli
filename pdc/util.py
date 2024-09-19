@@ -13,8 +13,17 @@ def df_sorted_records(*df):
         yield sorted(item.to_records(index=False).tolist())
 
 
-def df_zipper(*df):
-    yield from zip(*df_sorted_records(*df))
+def df_zipper(*df, strict=False):
+    yield from zip(*df_sorted_records(*df), strict=strict)
+
+
+def df_compare(*df):
+    try:
+        for item0, *items in df_zipper(*df, strict=True):
+            for item in items:
+                assert item0 == item
+    except ValueError as e:
+        raise AssertionError("dataframes differ in length or something") from e
 
 
 class File(namedtuple("File", ["fname", "df", "flags"])):

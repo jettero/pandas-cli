@@ -3,6 +3,7 @@
 
 import pytest
 import pdc.util
+import pandas as pd
 from .conftest import TA_TEST
 
 
@@ -80,3 +81,26 @@ def test_read_csv_header_fail_modalities(ta_test_fname):
     for item in ((x for x in "supz"), "supz", 7):
         with pytest.raises(ValueError):
             pdc.util.read_csv(ta_test_fname, headers=item)
+
+
+def test_df_compare_same():
+    df1 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
+    df2 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
+
+    pdc.util.df_compare(df1, df2)
+
+
+def test_df_compare_different_cell():
+    df1 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
+    df2 = pd.DataFrame({"A": [1, 2], "B": [1, 3]})
+
+    with pytest.raises(AssertionError):
+        pdc.util.df_compare(df1, df2)
+
+
+def test_df_compare_different_len():
+    df1 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
+    df2 = pd.DataFrame({"A": [1, 2, 3], "B": [1, 2, 3]})
+
+    with pytest.raises(AssertionError):
+        pdc.util.df_compare(df1, df2)

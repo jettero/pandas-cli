@@ -4,7 +4,7 @@
 import pytest
 import pdc.op
 import pdc.parser
-from pdc.util import df_zipper
+from pdc.util import df_zipper, df_compare
 from pdc.parser import Call, Idx, transformer
 
 
@@ -55,13 +55,7 @@ def test_concat(ta_test1, ta_test2, ta_t1Ct2):
     assert pf.args[1].deref is ta_test2
 
     df = pf()
-
-    ldf = len(df)
-    lta = len(ta_t1Ct2)
-    assert ldf == lta
-
-    for lhs, rhs in df_zipper(df, ta_t1Ct2.df):
-        assert lhs == rhs
+    df_compare(df, ta_t1Ct2)
 
 
 def test_concat_kwargs(ta_test1, ta_test2, ta_t1Ct2Kvar):
@@ -109,4 +103,38 @@ def test_concat_nested_kwargs(ta_test1, ta_test2, ta_test3, ta_t1Ct2Kvar, ta_t1C
     assert ldf == lta
 
     for lhs, rhs in df_zipper(df, ta_t1Ct2KvarCt3.df):
+        assert lhs == rhs
+
+
+def test_filter(ta_test1, ta_test2, ta_t1Ft2):
+    pf = pdc.parser.parse("f1-f2", files=(ta_test1, ta_test2))
+
+    assert pf.fn is pdc.op.filter
+    assert pf.args[0].deref is ta_test1
+    assert pf.args[1].deref is ta_test2
+
+    df = pf()
+
+    ldf = len(df)
+    lta = len(ta_t1Ft2)
+    assert ldf == lta
+
+    for lhs, rhs in df_zipper(df, ta_t1Ft2.df):
+        assert lhs == rhs
+
+
+def test_filter(ta_test1, ta_test2, ta_t1Ft2Kvar):
+    pf = pdc.parser.parse("f1 - f2 @ var", files=(ta_test1, ta_test2))
+
+    assert pf.fn is pdc.op.filter
+    assert pf.args[0].deref is ta_test1
+    assert pf.args[1].deref is ta_test2
+
+    df = pf()
+
+    ldf = len(df)
+    lta = len(ta_t1Ft2Kvar)
+    assert ldf == lta
+
+    for lhs, rhs in df_zipper(df, ta_t1Ft2Kvar.df):
         assert lhs == rhs
