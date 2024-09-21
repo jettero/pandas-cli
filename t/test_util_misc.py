@@ -104,3 +104,15 @@ def test_df_compare_different_len():
 
     with pytest.raises(AssertionError):
         pdc.util.df_compare(df1, df2)
+
+
+def test_xlate_column_labels(ta_test1):
+    assert pdc.util.xlate_column_labels(ta_test1.df, "var") == ["var"]
+    assert pdc.util.xlate_column_labels(ta_test1.df, "val") == ["val"]
+    assert pdc.util.xlate_column_labels(ta_test1.df, "var", "val") == ["val", "var"]
+
+    assert pdc.util.xlate_column_labels(ta_test1.df, 1) == ["var"]
+    assert pdc.util.xlate_column_labels(ta_test1.df, 2) == ["val"]
+
+    assert pdc.util.xlate_column_labels(ta_test1.df, "v*") == ["val", "var"]
+    assert pdc.util.xlate_column_labels(ta_test1.df, "v*l") == ["val"]

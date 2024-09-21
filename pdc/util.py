@@ -2,9 +2,20 @@
 
 import os
 import sys
-from fnmatch import fnmatch
 from collections import namedtuple
+from fnmatch import fnmatch
 import pandas as pd
+
+
+class File(namedtuple("File", ["fname", "df", "flags"])):
+    def __new__(cls, *a, **kw):
+        return super().__new__(cls, *a, kw)
+
+    def __len__(self):
+        return len(self.df)
+
+    def __repr__(self):
+        return f"<{os.path.basename(self.fname)}>"
 
 
 def xlate_column_labels(df, *items):
@@ -12,7 +23,7 @@ def xlate_column_labels(df, *items):
     ret = set()
     for item in items:
         if isinstance(item, int):
-            ret.add(cols[item])
+            ret.add(cols[item - 1])
         elif "*" in item:
             for c in cols:
                 if fnmatch(c, item):
@@ -40,17 +51,6 @@ def df_compare(*df):
                 assert item0 == item
     except ValueError as e:
         raise AssertionError("dataframes differ in length or something") from e
-
-
-class File(namedtuple("File", ["fname", "df", "flags"])):
-    def __new__(cls, *a, **kw):
-        return super().__new__(cls, *a, kw)
-
-    def __len__(self):
-        return len(self.df)
-
-    def __repr__(self):
-        return f"<{os.path.basename(self.fname)}>"
 
 
 def special_list_sort(*args):
