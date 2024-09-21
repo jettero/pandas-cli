@@ -8,7 +8,7 @@ import pdc.op
 
 grammar = """
 %import common.CNAME
-%import common.NUMBER
+%import common.DIGIT
 %import common.WS
 %ignore WS
 
@@ -23,7 +23,7 @@ operation: expr "+" expr options -> concat
 assign: (tmp|tmp_bump) "=" expr
 implicit_assign: expr
 
-col: CNAME | NUMBER
+col: CNAME | IDX
 
 opt: "@"      col ("," col)* -> key
    | "on" "(" col ("," col)* ")" -> key
@@ -32,8 +32,11 @@ options: opt*
 
 df: file | tmp
 
-file: "f" NUMBER
-tmp: "t" NUMBER
+LDIGIT: "1".."9"
+IDX: LDIGIT DIGIT*
+
+file: "f" IDX
+tmp: "t" IDX
 tmp_bump: "t+"
 """
 
