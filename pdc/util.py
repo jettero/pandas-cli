@@ -17,9 +17,21 @@ class File(namedtuple("File", ["fname", "df", "flags"])):
     def __repr__(self):
         return f"<{os.path.basename(self.fname)}>"
 
+    @property
+    def columns(self):
+        return self.df.columns.tolist()
+
+    def __eq__(self, other):
+        if isinstance(other, File) and df_compare(self.df, other.df):
+            return True
+        return False
+
+    def __ne__(self, other):
+        return not (self == other)
+
 
 def xlate_column_labels(df, *items):
-    cols = df.columns.tolist()
+    cols = df.columns if isinstance(df, File) else df.columns.tolist()
     ret = set()
     for item in items:
         if isinstance(item, int):
@@ -45,12 +57,16 @@ def df_zipper(*df, strict=False):
 
 
 def df_compare(*df):
+    # NOTE: we use this df_compare function in tests and they're handy for
+    # that. but if these inputs were large, the below would be inefficient.
     try:
         for item0, *items in df_zipper(*df, strict=True):
             for item in items:
-                assert item0 == item
+                if item0 != item:
+                    return False
     except ValueError as e:
-        raise AssertionError("dataframes differ in length or something") from e
+        return False  # zipper strict=True raises a ValueError when length differs
+    return True
 
 
 def special_list_sort(*args):
@@ -75,7 +91,7 @@ def read_csv(fname, headers=None):
     if isinstance(headers, pd.DataFrame):
         headers = headers.columns.tolist()
     elif isinstance(headers, File):
-        headers = headers.df.columns.tolist()
+        headers = headers.columns
     elif isinstance(headers, (tuple, list)):
         pass
     else:

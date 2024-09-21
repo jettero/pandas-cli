@@ -50,7 +50,7 @@ def test_read_csv_header_modalities(ta_test_fname):
     fz = (
         pdc.util.read_csv(ta_test_fname, headers=f1),
         pdc.util.read_csv(ta_test_fname, headers=f1.df),
-        pdc.util.read_csv(ta_test_fname, headers=f1.df.columns.tolist()),
+        pdc.util.read_csv(ta_test_fname, headers=f1.columns),
         pdc.util.read_csv(ta_test_fname, headers=True),
         pdc.util.read_csv(ta_test_fname, headers=False),
         pdc.util.read_csv(ta_test_fname, headers=None),
@@ -58,9 +58,9 @@ def test_read_csv_header_modalities(ta_test_fname):
 
     for f in fz:
         assert isinstance(f, pdc.util.File)
-        assert f1.df.columns.tolist() == f.df.columns.tolist()
+        assert f1.columns == f.columns
 
-    for c in f1.df.columns.tolist():
+    for c in f1.columns:
         # NOTE: by specifying the headers above, we pretend the files don't
         # have headers -- but they do, so we have to skip the header in the RHS
         # below
@@ -87,23 +87,21 @@ def test_df_compare_same():
     df1 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
     df2 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
 
-    pdc.util.df_compare(df1, df2)
+    assert pdc.util.df_compare(df1, df2) is True
 
 
 def test_df_compare_different_cell():
     df1 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
     df2 = pd.DataFrame({"A": [1, 2], "B": [1, 3]})
 
-    with pytest.raises(AssertionError):
-        pdc.util.df_compare(df1, df2)
+    assert pdc.util.df_compare(df1, df2) is False
 
 
 def test_df_compare_different_len():
     df1 = pd.DataFrame({"A": [1, 2], "B": [1, 2]})
     df2 = pd.DataFrame({"A": [1, 2, 3], "B": [1, 2, 3]})
 
-    with pytest.raises(AssertionError):
-        pdc.util.df_compare(df1, df2)
+    assert pdc.util.df_compare(df1, df2) is False
 
 
 def test_xlate_column_labels(ta_test1):
@@ -116,3 +114,12 @@ def test_xlate_column_labels(ta_test1):
 
     assert pdc.util.xlate_column_labels(ta_test1.df, "v*") == ["val", "var"]
     assert pdc.util.xlate_column_labels(ta_test1.df, "v*l") == ["val"]
+
+
+def test_compare_files(ta_test1, ta_test2):
+    assert ta_test1 == ta_test1
+    assert ta_test2 == ta_test2
+    assert ta_test1 != ta_test2
+
+    df = pd.concat([ta_test2.df] * 2, ignore_index=True)
+    assert ta_test2 != df

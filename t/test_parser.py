@@ -4,7 +4,7 @@
 import pytest
 import pdc.op
 import pdc.parser
-from pdc.util import df_zipper, df_compare
+from pdc.util import df_zipper
 from pdc.parser import Call, Idx, transformer
 
 
@@ -55,7 +55,7 @@ def test_concat(ta_test1, ta_test2, ta_t1Ct2):
     assert pf.args[1].deref is ta_test2
 
     df = pf()
-    df_compare(df, ta_t1Ct2)
+    assert ta_t1Ct2 == df
 
 
 def test_concat_kwargs(ta_test1, ta_test2, ta_t1Ct2Kvar):
