@@ -86,7 +86,7 @@ def set_say_level(x=None):
             x = SAY_WORDS.index(x)
         except (ValueError, AttributeError):
             x = int(x)
-        SAY_LEVEL = max(SAY_DEBUG, min(x, SAY_ERROR))
+        SAY_LEVEL = max(SAY_TRACE, min(x, SAY_ERROR))
     except (KeyError, ValueError):
         SAY_LEVEL = SAY_ERROR
     return SAY_LEVEL
