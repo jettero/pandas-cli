@@ -23,8 +23,10 @@ operation: expr "+" expr options -> concat
 assign: (tmp|tmp_bump) "=" expr
 implicit_assign: expr
 
-opt: "@"      CNAME ("," CNAME)* -> key
-   | "on" "(" CNAME ("," CNAME)* ")" -> key
+col: CNAME | NUMBER
+
+opt: "@"      col ("," col)* -> key
+   | "on" "(" col ("," col)* ")" -> key
 
 options: opt*
 
@@ -85,9 +87,17 @@ class MacroTransformer(Transformer):
     def start(self, *op):
         return op[-1]
 
+    def col(self, op):
+        say_trace(f"MT::col({op!r})")
+        try:
+            return int(op)
+        except ValueError:
+            pass
+        return str(op)
+
     def key(self, *op):
         say_trace(f"MT::key({op!r})")
-        return "key", set(str(o) for o in op)
+        return "key", set(op)
 
     def options(self, *op):
         say_trace(f"MT::options({op!r})")

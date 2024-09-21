@@ -2,8 +2,24 @@
 
 import os
 import sys
+from fnmatch import fnmatch
 from collections import namedtuple
 import pandas as pd
+
+
+def xlate_column_labels(df, *items):
+    cols = df.columns.tolist()
+    ret = set()
+    for item in items:
+        if isinstance(item, int):
+            ret.add(cols[item])
+        elif "*" in item:
+            for c in cols:
+                if fnmatch(c, item):
+                    ret.add(c)
+        else:
+            ret.add(item)
+    return list(sorted(ret))
 
 
 def df_sorted_records(*df):

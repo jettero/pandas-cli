@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import pandas as pd
-from .util import say_warn
+from .util import say_warn, xlate_column_labels
 
 DING_DING_DING = "\x07\x07\x07"  # ding ding ding
 
@@ -22,9 +22,9 @@ def concat(A, B, key=None):
     elif isinstance(key, list):
         pass
     elif isinstance(key, (tuple, set)):
-        key = list(key)
+        key = xlate_column_labels(B, *key)
     elif isinstance(key, str):
-        key = [key]
+        key = xlate_column_labels(B, key)
     else:
         raise ValueError(f"key={key} is invalid. should be a tuple of strings or something")
     return df.drop_duplicates(subset=key, keep="last")
@@ -39,9 +39,9 @@ def transpocat(A, B, key=None, merge_type="outer"):
     elif isinstance(key, list):
         pass
     elif isinstance(key, (tuple, set)):
-        key = list(key)
+        key = xlate_column_labels(B, *key)
     elif isinstance(key, str):
-        key = [key]
+        key = xlate_column_labels(B, key)
     else:
         raise ValueError(f"key={key} is invalid. should be a tuple of strings or something")
     A = pd.merge(A, B, on=key, suffixes=("", DING_DING_DING), how=merge_type)
@@ -61,9 +61,9 @@ def filter(A, B, key=None):
     elif isinstance(key, list):
         pass
     elif isinstance(key, (tuple, set)):
-        key = list(key)
+        key = xlate_column_labels(B, *key)
     elif isinstance(key, str):
-        key = [key]
+        key = xlate_column_labels(B, key)
     else:
         raise ValueError(f"key={key} is invalid. should be a tuple of strings or something")
     A["unique_key"] = A[key].apply(tuple, axis=1)
