@@ -2,8 +2,8 @@
 # I've had the idea to make this more than once
 
 I started making this like two years ago, but lost interest. Then I started
-making it again (see contrib/pd-thing). I didn't finish it, but I remembered I
-had the same idea before. Maybe by copying my new version into contrib/ I'll
+making it again (see old/pd-thing). I didn't finish it, but I remembered I
+had the same idea before. Maybe by copying my new version into old/ I'll
 suddenly start working on this again? we'll see.
 
 My fresher energy ideas (although I still like the below) is that I really need
