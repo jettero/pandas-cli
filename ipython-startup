@@ -11,13 +11,35 @@ import pdc.op
 
 pdc.util.set_say_level(pdc.util.SAY_INFO)
 
+TA_FILES = list()
+
+
+def sl(x):
+    pdc.util.set_say_level(x)
+    return pdc.util.SAY_LEVEL
+
+
+def parse(x):
+    return pdc.parser.parse(x, files=TA_FILES)
+
+
 from t.conftest import *
+
+
 def unwrap_fixtures():
     g = globals()
     for name in g:
         try:
             item = g[name].__pytest_wrapped__.obj()
-            g[name] = next(item) if inspect.isgenerator(item) else item
+            if inspect.isgenerator(item):
+                item = next(item)
+            g[name] = item
         except AttributeError:
             pass
-/unwrap_fixtures
+    TA_FILES.clear()
+    for name in sorted(g):
+        if name.startswith("ta_") and isinstance(obj := g[name], pdc.parser.File):
+            TA_FILES.append(obj)
+
+
+unwrap_fixtures()
