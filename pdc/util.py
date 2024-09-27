@@ -2,24 +2,72 @@
 
 import os
 import sys
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from fnmatch import fnmatch
 import pandas as pd
 
 
+class FileCache(OrderedDict):
+    HEADERS_FROM = None
+
+    def set_headers_from(self, hf):
+        if hf in (None, False, 0, ""):
+            self.HEADERS_FROM = None
+            return
+
+        if isinstance(hf, File):
+            if hf.fname not in self:
+                self[hf.fname] = hf
+            self.HEADERS_FROM = hf.fname
+            return
+
+        hf = os.path.realpath(hf)
+        if hf not in self:
+            raise KeyError(f"{hf} appears to not yet be loaded")
+        self.HEADERS_FROM = hf
+
+    def add_file(self, fobj, populate_cache=True):
+        if populate_cache:
+            self[fobj.fname] = fobj
+        return fobj
+
+    @property
+    def last(self):
+        try:
+            return next(reversed(self.items()))[-1]
+        except StopIteration:
+            pass
+
+    @property
+    def headers_from(self):
+        if self.HEADERS_FROM:
+            return self.get(self.HEADERS_FROM)
+        return self.last
+
+    @headers_from.setter
+    def headers_from(self, v):
+        return self.set_headers_from(v)
+
+    def clear(self):
+        super().clear()
+        self.HEADERS_FROM = None
+
+    reset = clear
+
+
+FILE_CACHE = FileCache()
+
+
 class File(namedtuple("File", ["fname", "df", "flags"])):
-    def __new__(cls, *a, **kw):
-        return super().__new__(cls, *a, kw)
+    def __new__(cls, fname, *a, **kw):
+        fname = os.path.realpath(fname)
+        return super().__new__(cls, fname, *a, kw)
 
     def __len__(self):
         return len(self.df)
 
     def __repr__(self):
         return f"<{os.path.basename(self.fname)}>"
-
-    @property
-    def columns(self):
-        return self.df.columns.tolist()
 
     def __eq__(self, other):
         if isinstance(other, File) and df_compare(self.df, other.df):
@@ -28,6 +76,14 @@ class File(namedtuple("File", ["fname", "df", "flags"])):
 
     def __ne__(self, other):
         return not (self == other)
+
+    @property
+    def columns(self):
+        return self.df.columns.tolist()
+
+    @property
+    def as_list(self):
+        return list(sorted(self.df.to_records(index=False).tolist()))
 
 
 def xlate_column_labels(df, *items):
@@ -83,10 +139,21 @@ def special_list_sort(*args):
     return inner
 
 
-def read_csv(fname, headers=None):
+def read_csv(fname, headers=None, cache_ok=False, populate_cache=True):
+    fname = os.path.realpath(fname)
+
+    if cache_ok and fname in FILE_CACHE:
+        # Note that we don't automatically return the cached copy cuz the
+        # expectation is that if we specify a file twice on the command-line,
+        # we should get two different DataFrame objects.
+        #
+        # The exception, of course, is where we (re)use the headers from a
+        # previous file to populate the columns of some new --csv-nh file.
+        return FILE_CACHE[fname]
+
     if headers is None or headers is True or headers is False:
         df = pd.read_csv(fname)
-        return File(fname, df)
+        return FILE_CACHE.add_file(File(fname, df), populate_cache=populate_cache)
 
     if isinstance(headers, pd.DataFrame):
         headers = headers.columns.tolist()
@@ -96,8 +163,18 @@ def read_csv(fname, headers=None):
         pass
     else:
         raise ValueError(f"headers={headers!r} should be a DataFrame, pdc.File, or tuple/list")
+
     df = pd.read_csv(fname, header=None, names=headers)
-    return File(fname, df, derived_headers=True)
+    return FILE_CACHE.add_file(File(fname, df, derived_headers=True), populate_cache=populate_cache)
+
+
+def read_csv_nh(fname):
+    # Here, we specifically want to try to re-use the headers from whatever we
+    # specified with --headers-from or whatever file was loaded last.
+    hf = FILE_CACHE.headers_from
+    if not isinstance(hf, File):
+        raise KeyError(f"while trying to read {fname} sans headers: unable to locate source for header info")
+    return read_csv(fname, headers=hf, populate_cache=False)
 
 
 SAY_TRACE = 0
