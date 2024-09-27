@@ -123,3 +123,11 @@ def test_compare_files(ta_test1, ta_test2):
 
     df = pd.concat([ta_test2.df] * 2, ignore_index=True)
     assert ta_test2 != df
+
+
+def test_special_list_sort():
+    i = pdc.util.special_list_sort("b")
+
+    assert i("a") == "99a"
+    assert i("b") == "00b"
+    assert i("c") == "99c"

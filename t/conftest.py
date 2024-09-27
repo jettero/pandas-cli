@@ -7,9 +7,6 @@ from glob import glob
 
 import pdc.util
 
-from t.bin.gen_csv import main as gen_csv
-from t.bin.gen_json import main as gen_json
-
 TA_NHT = set(glob("t/asset/*_nh.csv"))
 TA_TEST = set(glob("t/asset/test*.csv")) - TA_NHT
 TA_OTHER = set(glob("t/asset/*.csv")) - set(TA_TEST).union(TA_NHT)
@@ -66,6 +63,11 @@ gen_ta_fixtures()
 
 #########################################################################
 ## from before the current re-write... unused for now...
+
+from t.bin.gen_csv import main as gen_csv
+from t.bin.gen_json import main as gen_json
+
+
 @pytest.fixture
 def csv1(filename="t/output/1.csv"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
