@@ -18,9 +18,10 @@ expr: operation | df
 
 operation: expr "+" expr options -> concat
          | expr "-" expr options -> filter
+         | wild_fort_seq MAPPING expr -> reduce
          | assign
 
-assign: (tmp|tmp_bump) "=" expr
+assign: (tmp|tmp_bump|lhs|rhs) "=" expr
 implicit_assign: expr
 
 col: CNAME | IDX
@@ -28,24 +29,33 @@ col: CNAME | IDX
 opt: "@"      col ("," col)* -> key
    | "on" "(" col ("," col)* ")" -> key
 
-options: opt*
-
-df: file | tmp
-
 LDIGIT: "1".."9"
 IDX: LDIGIT DIGIT*
+MAPPING: (":" | "=>")
 
+file_wild: "f" "*"
+tmp_wild: "t" "*"
+wild_df: file_wild | tmp_wild
+wild_fort_seq: wild_df ("," wild_df)*
+
+options: opt*
+df: file | tmp | lhs | rhs
 file: "f" IDX
 tmp: "t" IDX
-tmp_bump: "t+"
+tmp_bump: "T" | "t_" | "t?" | "tt"
+lhs: "lhs" | "a"
+rhs: "rhs" | "b"
 """
 
 
 @v_args(inline=True)
 class MacroTransformer(Transformer):
+    sv_nam = ("lhs", "rhs", "ret")
+
     def __init__(self):
         self.tmpvz = list()
         self.files = list()
+        self.sv = list()
 
     def start(self, *op):
         return op[-1]
@@ -84,11 +94,16 @@ class MacroTransformer(Transformer):
         if src is None:
             src = self.tmpvz
         if src is self.tmpvz:
-            src_desc = "tmpvz"
+            src_desc = "t?"
         elif src is self.files:
-            src_desc = "files"
+            src_desc = "f?"
+        elif src is self.sv:
+            try:
+                src_desc = self.sv_nam[op]
+            except IndexError:
+                src_desc = "sv?"
         else:
-            src_desc = "?????"
+            src_desc = "???"
         op = len(src) + 1 if op in ("+", "-", "") else int(op)
         if op < 1:
             op = 1
@@ -105,6 +120,12 @@ class MacroTransformer(Transformer):
 
     def file(self, op):
         return self.op_idx(op, src=self.files)
+
+    def lhs(self):
+        return self.op_idx(0, src=self.sv)
+
+    def rhs(self):
+        return self.op_idx(1, src=self.sv)
 
     def df(self, op):
         return op
@@ -125,12 +146,24 @@ class MacroTransformer(Transformer):
         say_debug(f"MT::assign({op1.short}, {op2}) -> {op1}")
         return op1
 
+    def rd_operation(self, *op):
+        say_error(f"MT::rd_operation({op})")
+        return "rd_operation"
+
+    def rd_expr(self, *op):
+        say_error(f"MT::rd_expr({op})")
+        return "rd_expr"
+
+    def reduce(self, *op):
+        say_error(f"MT::reduce({op})")
+        return "reduce"
+
 
 transformer = MacroTransformer()
 parser = Lark(grammar, parser="lalr", transformer=transformer)
 
 
-def parse(statement="r(f*: a+b)", files=None):
+def parse(statement="f*: a + b", files=None):
     for item in files:
         if not isinstance(item, File):
             raise ValueError(f"{item} is an invalid pdc.File argument")

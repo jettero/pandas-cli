@@ -20,7 +20,11 @@ def sl(x):
 
 
 def parse(x):
-    return pdc.parser.parse(x, files=TA_FILES)
+    try:
+        return pdc.parser.parse(x, files=TA_FILES)
+    except Exception as e:
+        pdc.util.say_error(f'parse error: {e}')
+
 
 
 from t.conftest import *
@@ -43,3 +47,6 @@ def unwrap_fixtures():
 
 
 unwrap_fixtures()
+
+
+/sl 'debug'

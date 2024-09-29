@@ -32,12 +32,12 @@ def ta_test_fname(request):
 
 
 @pytest.fixture
-def ta_test(FILE_CACHE, ta_test_fname):
+def ta_test(ta_test_fname):
     yield pdc.util.read_csv(ta_test_fname)
 
 
 @pytest.fixture
-def ta_test_all(FILE_CACHE):
+def ta_test_all():
     yield tuple(pdc.util.read_csv(x) for x in TA_TEST)
 
 
@@ -46,7 +46,7 @@ def gen_ta_fixtures():
 
         def fixture_func(file):
             @pytest.fixture
-            def _fixture(FILE_CACHE):
+            def _fixture():
                 yield pdc.util.read_csv(file)
 
             return _fixture

@@ -35,11 +35,15 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
 
     @property
     def short(self):
-        return f"{{{self.snam[0:1]}{self.op}}}"
+        if self.snam.endswith("?"):
+            return f"{{{self.snam[:-1]}{self.op}}}"
+        return f"{{{self.snam}}}"
 
     def __repr__(self):
         try:
             v = self.src[self.idx]
         except IndexError:
             v = "∅"
-        return f"{{{self.snam[0:1]}{self.op}:{v}}}"
+        if self.snam.endswith("?"):
+            return f"{{{self.snam[:-1]}{self.op}:{v}}}"
+        return f"{{{self.snam}:{v}}}"
