@@ -6,8 +6,7 @@ from .util import say_debug, say_trace, say_error
 import pdc.op
 from .ptype import Call, Idx, File
 
-grammar = """
-%import common.CNAME
+grammar = r"""
 %import common.DIGIT
 %import common.WS
 %ignore WS
@@ -18,25 +17,29 @@ expr: operation | df
 
 operation: expr "+" expr options -> concat
          | expr "-" expr options -> filter
-         | wild_fort_seq MAPPING expr -> reduce
+         | wild_df_seq MAPPING expr -> reduce
          | assign
 
 assign: (tmp|tmp_bump|lhs|rhs) "=" expr
 implicit_assign: expr
 
-col: CNAME | IDX
+col: COL_GLOB | IDX
 
 opt: "@"      col ("," col)* -> key
    | "on" "(" col ("," col)* ")" -> key
 
 LDIGIT: "1".."9"
 IDX: LDIGIT DIGIT*
-MAPPING: (":" | "=>")
+MAPPING: ":" | "=>"
+COL_GLOB: /[^,@;]+/
+NOSLASH_GLOB: /[^\/]+/
+NOPARA_GLOB: /[^()]+/
 
-file_wild: "f" "*"
-tmp_wild: "t" "*"
-wild_df: file_wild | tmp_wild
-wild_fort_seq: wild_df ("," wild_df)*
+file_glob: "f/" NOSLASH_GLOB "/" | "f(" NOPARA_GLOB ")"
+file_wild: "f*"
+tmp_wild: "t*"
+wild_df: file_wild | tmp_wild | file_glob
+wild_df_seq: wild_df ("," wild_df)*
 
 options: opt*
 df: file | tmp | lhs | rhs
@@ -58,6 +61,7 @@ class MacroTransformer(Transformer):
         self.sv = list()
 
     def start(self, *op):
+        say_trace(f"MT::start({op!r})")
         return op[-1]
 
     def col(self, op):
@@ -81,7 +85,7 @@ class MacroTransformer(Transformer):
 
     def concat(self, op1, op2, opt):
         c = Call(pdc.op.concat, (op1, op2), opt)
-        say_debug(f"MT::concat({op1.short}, {op2.short}, {opt!r}) -> {c}")
+        say_debug(f"MT::concat({op1.short}, {op2.short}, **{opt!r}) -> {c}")
         return c
 
     def filter(self, op1, op2, opt):
@@ -122,10 +126,10 @@ class MacroTransformer(Transformer):
         return self.op_idx(op, src=self.files)
 
     def lhs(self):
-        return self.op_idx(0, src=self.sv)
+        return self.op_idx(1, src=self.sv)
 
     def rhs(self):
-        return self.op_idx(1, src=self.sv)
+        return self.op_idx(2, src=self.sv)
 
     def df(self, op):
         return op
@@ -146,17 +150,32 @@ class MacroTransformer(Transformer):
         say_debug(f"MT::assign({op1.short}, {op2}) -> {op1}")
         return op1
 
-    def rd_operation(self, *op):
-        say_error(f"MT::rd_operation({op})")
-        return "rd_operation"
+    def file_glob(self, op):
+        say_debug(f"MT::file_glob({op})")
+        return list(self.file(x + 1) for x, df in enumerate(self.files) if df.glob(op))
 
-    def rd_expr(self, *op):
-        say_error(f"MT::rd_expr({op})")
-        return "rd_expr"
+    def file_wild(self):
+        say_debug(f"MT::file_wild()")
+        return list(self.file(x + 1) for x in range(len(self.files)))
 
-    def reduce(self, *op):
-        say_error(f"MT::reduce({op})")
-        return "reduce"
+    def tmp_wild(self):
+        say_debug("MT::tmp_wild()")
+        return list(self.tmp(x + 1) for x in range(len(self.files)))
+
+    def wild_df(self, op):
+        say_debug(f"MT::wild_df({op!r})")
+        return op
+
+    def wild_df_seq(self, *op):
+        say_debug(f"MT::wild_df_seq({op})")
+        return sum(op, start=list())
+
+    def reduce(self, df, _, op):
+        say_debug(f"MT::reduce({df}: {op})")
+        lhs, *df = df
+        for item in df:
+            lhs = op.replace_args(lhs, item)
+        return lhs
 
 
 transformer = MacroTransformer()

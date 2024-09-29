@@ -19,9 +19,9 @@ def sl(x):
     return pdc.util.SAY_LEVEL
 
 
-def parse(x):
+def parse(x, files=TA_FILES):
     try:
-        return pdc.parser.parse(x, files=TA_FILES)
+        return pdc.parser.parse(x, files=files)
     except Exception as e:
         pdc.util.say_error(f'parse error: {e}')
 

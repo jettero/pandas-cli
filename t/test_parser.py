@@ -105,13 +105,35 @@ def test_filter(ta_test1, ta_test2, ta_t1Ft2Kvar):
         assert lhs == rhs
 
 
-@pytest.mark.xfail
-def test_reduce(ta_test1, ta_test2, ta_t1Ct2):
+def test_reduce_t1Ct2(ta_test1, ta_test2, ta_t1Ct2):
     pf = pdc.parser.parse("f*: a + b", files=(ta_test1, ta_test2))
 
-    # assert pf.fn is pdc.op.concat
-    # assert pf.args[0].deref is ta_test1
-    # assert pf.args[1].deref is ta_test2
+    assert pf.fn is pdc.op.concat
+    assert pf.args[0].deref is ta_test1
+    assert pf.args[1].deref is ta_test2
 
     df = pf()
     assert ta_t1Ct2 == df
+
+
+def test_reduce_t1Ct2(ta_test1, ta_test2, ta_test3, ta_t1Ct2, ta_t1Ct2Ct3):
+    filez = (ta_test1, ta_test2, ta_test3)
+
+    pf = pdc.parser.parse("f/test[12].csv/: a + b", files=filez)
+
+    assert pf.fn is pdc.op.concat
+    assert pf.args[0].deref is ta_test1
+    assert pf.args[1].deref is ta_test2
+
+    df = pf()
+    assert ta_t1Ct2 == df
+
+    pf = pdc.parser.parse("f(t/asset/test*.csv): a + b", files=filez)
+
+    assert pf.fn is pdc.op.concat
+    assert pf.args[0].args[0].deref is ta_test1
+    assert pf.args[0].args[1].deref is ta_test2
+    assert pf.args[1].deref is ta_test3
+
+    df = pf()
+    assert ta_t1Ct2Ct3 == df

@@ -85,6 +85,14 @@ class File(namedtuple("File", ["fname", "df", "flags"])):
     def as_list(self):
         return list(sorted(self.df.to_records(index=False).tolist()))
 
+    def glob(self, pat):
+        if "**" not in pat and not pat.startswith("/"):
+            pat = f"**/{pat}"
+        if fnmatch(self.fname, pat):
+            say_debug(f"File::glob({self.fname}, {pat}) -> True")
+            return True
+        say_debug(f"File::glob({self.fname}, {pat}) -> False")
+
 
 def xlate_column_labels(df, *items):
     cols = df.columns if isinstance(df, File) else df.columns.tolist()

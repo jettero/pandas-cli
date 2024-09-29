@@ -17,6 +17,9 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
         fn = f"{f.__module__}.{f.__name__}"
         return f"{fn}(*{self.args!r}, **{self.kw!r})"
 
+    def replace_args(self, *args):
+        return Call(self.fn, args, self.kw)
+
 
 class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
     def __call__(self):
@@ -28,6 +31,14 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
             return res
         except IndexError:
             say_error(f"{self} points to nothing")
+
+    def __eq__(self, other):
+        if isinstance(other, Idx):
+            if self.op != other.op:
+                return False
+            if self.src is not other.src:
+                return False
+            return True
 
     @property
     def deref(self):
