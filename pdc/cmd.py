@@ -15,9 +15,15 @@ except ModuleNotFoundError:  # pragma: no cover
 
 VERSION = scm_version.split("+")[0]
 
+ARG_PARSER = None
+
 
 def populate_args(*a, **kw):  # pragma: no cover
-    parser = argparse.ArgumentParser(prog="pd-thing", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    global ARG_PARSER
+    ARG_PARSER = parser = argparse.ArgumentParser(
+        prog="pd-thing", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
     parser.add_argument(
         "-V", "--version", action="version", version=VERSION, help=f"show version ({VERSION}) and exit"
     )
@@ -115,6 +121,10 @@ def output(args, df):  # pragma: no cover
 
 def entry_point(*a, **kw):  # pragma: no cover
     args = populate_args(*a, **kw)
+
+    if not args.files:
+        ARG_PARSER.print_help()
+        sys.exit(0)
 
     pf = pdc.parser.parse(args.action, files=args.files)
     df = pf()
