@@ -17,7 +17,11 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
         fn = f"{f.__module__}.{f.__name__}"
         return f"{fn}(*{self.args!r}, **{self.kw!r})"
 
-    def replace_args(self, *args):
+    def replace_args(self, *todo):
+        args = self.args
+        for orig, nv in todo:
+            args = [nv if x == orig else x for x in args]
+        args = [x.replace_args(*todo) if isinstance(x, Call) else x for x in args]
         return Call(self.fn, args, self.kw)
 
 
@@ -42,7 +46,10 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
 
     @property
     def deref(self):
-        return self.src[self.idx]
+        ret = self.src[self.idx]
+        if isinstance(ret, Idx):
+            return ret.deref
+        return ret
 
     @property
     def short(self):

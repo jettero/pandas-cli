@@ -242,8 +242,3 @@ say_warning = say_warn
 
 def say_error(*msg):
     say(*msg, level=SAY_ERROR)
-
-
-def say_fatal(*msg):
-    say_error(*msg)
-    sys.exit(200)

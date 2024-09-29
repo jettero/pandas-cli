@@ -53,7 +53,7 @@ rhs: "rhs" | "b"
 
 @v_args(inline=True)
 class MacroTransformer(Transformer):
-    sv_nam = ("lhs", "rhs", "ret")
+    sv_nam = ("lhs", "rhs")
 
     def __init__(self):
         self.tmpvz = list()
@@ -97,21 +97,21 @@ class MacroTransformer(Transformer):
         orig_op = op
         if src is None:
             src = self.tmpvz
+        op = len(src) + 1 if op in ("+", "-", "") else int(op)
+        if op < 1:
+            op = 1
+        idx = op - 1
         if src is self.tmpvz:
             src_desc = "t?"
         elif src is self.files:
             src_desc = "f?"
         elif src is self.sv:
             try:
-                src_desc = self.sv_nam[op]
+                src_desc = self.sv_nam[idx]
             except IndexError:
                 src_desc = "sv?"
         else:
             src_desc = "???"
-        op = len(src) + 1 if op in ("+", "-", "") else int(op)
-        if op < 1:
-            op = 1
-        idx = op - 1
         ret = Idx(op, idx, src_desc, src)
         say_trace(f"MT::op_idx({src_desc[0:1]}{orig_op}) -> {ret}")
         return ret
@@ -160,7 +160,7 @@ class MacroTransformer(Transformer):
 
     def tmp_wild(self):
         say_debug("MT::tmp_wild()")
-        return list(self.tmp(x + 1) for x in range(len(self.files)))
+        return list(self.tmp(x + 1) for x in range(len(self.tmpvz)))
 
     def wild_df(self, op):
         say_debug(f"MT::wild_df({op!r})")
@@ -172,10 +172,12 @@ class MacroTransformer(Transformer):
 
     def reduce(self, df, _, op):
         say_debug(f"MT::reduce({df}: {op})")
-        lhs, *df = df
+        lhs = self.lhs()
+        rhs = self.rhs()
+        ret, *df = df
         for item in df:
-            lhs = op.replace_args(lhs, item)
-        return lhs
+            ret = op.replace_args((lhs, ret), (rhs, item))
+        return ret
 
 
 transformer = MacroTransformer()
@@ -187,4 +189,5 @@ def parse(statement="f*: a + b", files=None):
         if not isinstance(item, File):
             raise ValueError(f"{item} is an invalid pdc.File argument")
     transformer.files = files if isinstance(files, (list, tuple)) else list()
+    transformer.tmpvz.clear()
     return parser.parse(statement)

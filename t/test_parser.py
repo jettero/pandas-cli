@@ -116,7 +116,7 @@ def test_reduce_t1Ct2(ta_test1, ta_test2, ta_t1Ct2):
     assert ta_t1Ct2 == df
 
 
-def test_reduce_t1Ct2(ta_test1, ta_test2, ta_test3, ta_t1Ct2, ta_t1Ct2Ct3):
+def test_reduce_t1Ct2Ct3(ta_test1, ta_test2, ta_test3, ta_t1Ct2, ta_t1Ct2Ct3):
     filez = (ta_test1, ta_test2, ta_test3)
 
     pf = pdc.parser.parse("f/test[12].csv/: a + b", files=filez)
@@ -137,3 +137,12 @@ def test_reduce_t1Ct2(ta_test1, ta_test2, ta_test3, ta_t1Ct2, ta_t1Ct2Ct3):
 
     df = pf()
     assert ta_t1Ct2Ct3 == df
+
+
+def test_reduce_tmp_wild(ta_test1, ta_test2, ta_test3):
+    pf = pdc.parser.parse("f1+f2;f3; t*: a+b", files=(ta_test1, ta_test2, ta_test3))
+
+    assert pf.fn is pdc.op.concat
+    assert pf.args[0].deref.args[0].deref is ta_test1
+    assert pf.args[0].deref.args[1].deref is ta_test2
+    assert pf.args[1].deref is ta_test3

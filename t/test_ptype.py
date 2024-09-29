@@ -38,3 +38,14 @@ def test_op_idx_missed_items(listoid):
     j = transformer.op_idx("2", listoid)
     assert j.short == "{??2}"
     assert j.deref == 19
+
+
+def test_op_idx_sv_items():
+    lhs = transformer.op_idx("1", src=transformer.sv)
+    assert lhs.snam == "lhs"
+
+    rhs = transformer.op_idx("2", src=transformer.sv)
+    assert rhs.snam == "rhs"
+
+    lol = transformer.op_idx("3", src=transformer.sv)
+    assert lol.snam == "sv?"
