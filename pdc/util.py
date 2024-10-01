@@ -148,6 +148,7 @@ def special_list_sort(*args):
 
 
 def read_csv(fname, headers=None, cache_ok=False, populate_cache=True):
+    say_debug(f"util::read_csv({fname})")
     fname = os.path.realpath(fname)
 
     if cache_ok and fname in FILE_CACHE:
@@ -180,6 +181,7 @@ def read_csv_nh(fname):
     # Here, we specifically want to try to re-use the headers from whatever we
     # specified with --headers-from or whatever file was loaded last.
     hf = FILE_CACHE.headers_from
+    say_debug(f"util::read_csv_hn({fname}) [hf: {hf}]")
     if not isinstance(hf, File):
         raise KeyError(f"while trying to read {fname} sans headers: unable to locate source for header info")
     return read_csv(fname, headers=hf, populate_cache=False)
