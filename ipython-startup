@@ -9,6 +9,8 @@ import pdc.util
 import pdc.parser
 import pdc.op
 
+from pdc.fname_parser import grok_fname
+
 pdc.util.set_say_level(pdc.util.SAY_INFO)
 
 TA_FILES = list()
@@ -18,6 +20,7 @@ def sl(x):
     pdc.util.set_say_level(x)
     return pdc.util.SAY_LEVEL
 
+/sl 'debug'
 
 def parse(x, files=TA_FILES):
     try:
@@ -47,6 +50,3 @@ def unwrap_fixtures():
 
 
 unwrap_fixtures()
-
-
-/sl 'debug'
