@@ -2,96 +2,11 @@
 
 import os
 import sys
-from collections import namedtuple, OrderedDict
+import re
 from fnmatch import fnmatch
 import pandas as pd
-
-
-class FileCache(OrderedDict):
-    HEADERS_FROM = None
-
-    def set_headers_from(self, hf):
-        if hf in (None, False, 0, ""):
-            self.HEADERS_FROM = None
-            return
-
-        if isinstance(hf, File):
-            if hf.fname not in self:
-                self[hf.fname] = hf
-            self.HEADERS_FROM = hf.fname
-            return
-
-        hf = os.path.realpath(hf)
-        if hf not in self:
-            raise KeyError(f"{hf} appears to not yet be loaded")
-        self.HEADERS_FROM = hf
-
-    def add_file(self, fobj, populate_cache=True):
-        if populate_cache:
-            self[fobj.fname] = fobj
-        return fobj
-
-    @property
-    def last(self):
-        try:
-            return next(reversed(self.items()))[-1]
-        except StopIteration:
-            pass
-
-    @property
-    def headers_from(self):
-        if self.HEADERS_FROM:
-            return self.get(self.HEADERS_FROM)
-        return self.last
-
-    @headers_from.setter
-    def headers_from(self, v):
-        return self.set_headers_from(v)
-
-    def clear(self):
-        super().clear()
-        self.HEADERS_FROM = None
-
-    reset = clear
-
-
-FILE_CACHE = FileCache()
-
-
-class File(namedtuple("File", ["fname", "df", "flags"])):
-    def __new__(cls, fname, *a, **kw):
-        fname = os.path.realpath(fname)
-        return super().__new__(cls, fname, *a, kw)
-
-    def __len__(self):
-        return len(self.df)
-
-    def __repr__(self):
-        return f"<{os.path.basename(self.fname)}>"
-
-    def __eq__(self, other):
-        if isinstance(other, File) and df_compare(self.df, other.df):
-            return True
-        return False
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    @property
-    def columns(self):
-        return self.df.columns.tolist()
-
-    @property
-    def as_list(self):
-        return list(sorted(self.df.to_records(index=False).tolist()))
-
-    def glob(self, pat):
-        if "**" not in pat and not pat.startswith("/"):
-            pat = f"**/{pat}"
-        if fnmatch(self.fname, pat):
-            say_debug(f"File::glob({self.fname}, {pat}) -> True")
-            return True
-        say_debug(f"File::glob({self.fname}, {pat}) -> False")
+from .fname_parser import grok_fname
+from .ptype import TypedFileName, File, FILE_CACHE
 
 
 def xlate_column_labels(df, *items):
@@ -147,45 +62,73 @@ def special_list_sort(*args):
     return inner
 
 
-def read_csv(fname, headers=None, cache_ok=False, populate_cache=True):
-    say_debug(f"util::read_csv({fname})")
-    fname = os.path.realpath(fname)
+def read_csv(fname, cache_ok=False, populate_cache=True, globby_ok=True):
+    say_debug(f"util::read_csv({fname}, cache_ok={cache_ok}, populate_cache={populate_cache}, globby_ok={globby_ok})")
+    return read_file(f"{fname}@csv", cache_ok=cache_ok, populate_cache=populate_cache)
 
-    if cache_ok and fname in FILE_CACHE:
-        # Note that we don't automatically return the cached copy cuz the
-        # expectation is that if we specify a file twice on the command-line,
-        # we should get two different DataFrame objects.
-        #
-        # The exception, of course, is where we (re)use the headers from a
-        # previous file to populate the columns of some new --csv-nh file.
-        return FILE_CACHE[fname]
 
-    if headers is None or headers is True or headers is False:
-        df = pd.read_csv(fname)
-        return FILE_CACHE.add_file(File(fname, df), populate_cache=populate_cache)
-
-    if isinstance(headers, pd.DataFrame):
-        headers = headers.columns.tolist()
-    elif isinstance(headers, File):
-        headers = headers.columns
-    elif isinstance(headers, (tuple, list)):
-        pass
+def read_file(fname, cache_ok=False, populate_cache=True, globby_ok=False):
+    say_debug(f"util::read_file({fname}, cache_ok={cache_ok}, populate_cache={populate_cache}, globby_ok={globby_ok})")
+    if isinstance(fname, TypedFileName):
+        tfn = fname
     else:
-        raise ValueError(f"headers={headers!r} should be a DataFrame, pdc.File, or tuple/list")
+        tfn = grok_fname(fname, last_file=FILE_CACHE.last)
+        say_debug(f"util::read_file() translated {fname} to {tfn}")
+    fname = tfn.fname
 
-    df = pd.read_csv(fname, header=None, names=headers)
-    return FILE_CACHE.add_file(File(fname, df, derived_headers=True), populate_cache=populate_cache)
+    if cache_ok:
+        if tfn.fname in FILE_CACHE:
+            # Note that we don't automatically return the cached copy cuz the
+            # expectation is that if we specify a file twice on the command-line,
+            # we should get two different DataFrame objects.
+            #
+            # The exception, of course, is where we (re)use the headers from a
+            # previous file to populate the columns of some new file.
+            say_debug(f"util::read_file() found cached entry for {tfn.fname}")
+            return FILE_CACHE[tfn.fname]
+
+        if globby_ok:
+            for item in FILE_CACHE.values():
+                if item.glob(tfn.fname):
+                    say_debug(f"util::read_file() found cached entry by globby for {tfn.fname}")
+                    return item
+
+    # XXX: excel and json formats may need additional options. we have no
+    # syntax for that.
+
+    # XXX: this header source business is very csv oriented.  I did confirm
+    # that the headers=None, names=() thing will work for read_excel, it won't
+    # for read_json.
+
+    hkw = dict()
+    if tfn.hsrc is not None:
+        hf = read_file(tfn.hsrc, cache_ok=True, populate_cache=False, globby_ok=True)
+        hkw["header"] = None
+        hkw["names"] = hf.columns
+
+    if tfn.ftype == "csv":
+        df = pd.read_csv(tfn.fname, **hkw)
+
+    elif tfn.ftype == "tsv":
+        df = pd.read_csv(tfn.fname, sep="\t", **hkw)
+
+    elif tfn.ftype == "excel":
+        df = pd.read_excel(tfn.fname, **hkw)
+
+    elif tfn.ftype == "json":
+        if hkw:
+            raise ValueError(
+                "fname={tfn.fname}'s filetype={tfn.ftype} but only csv, tsv, and excel are supported when header source is specified"
+            )
+        df = pd.read_json(tfn.fname)
+
+    else:
+        raise ValueError("fname={tfn.fname}'s filetype={tfn.ftype} not (yet?) supported")
+
+    return FILE_CACHE.add_file(File(fname, df, derived_headers=bool(hkw)), populate_cache=populate_cache)
 
 
-def read_csv_nh(fname):
-    # Here, we specifically want to try to re-use the headers from whatever we
-    # specified with --headers-from or whatever file was loaded last.
-    hf = FILE_CACHE.headers_from
-    say_debug(f"util::read_csv_hn({fname}) [hf: {hf}]")
-    if not isinstance(hf, File):
-        raise KeyError(f"while trying to read {fname} sans headers: unable to locate source for header info")
-    return read_csv(fname, headers=hf, populate_cache=False)
-
+####################################################
 
 SAY_TRACE = 0
 SAY_DEBUG = SAY_TRACE + 1
@@ -220,7 +163,7 @@ SAY_TRIGGER = bytes([87, 84, 70]).decode()
 def say(*msg, level=SAY_INFO):
     level = max(SAY_TRACE, min(level, SAY_ERROR))
     if level >= SAY_LEVEL or any(SAY_TRIGGER in s for s in msg):
-        print(f"[{SAY_WORDS[level]}]", *msg, file=sys.stderr)
+        print(f"[{SAY_WORDS[level]}]", *msg, file=sys.stderr, flush=True)
 
 
 def say_trace(*msg):

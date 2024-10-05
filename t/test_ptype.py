@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import pytest
-from pdc.ptype import Idx
+from pdc.ptype import Idx, TypedFileName
 from pdc.parser import transformer
 
 
@@ -49,3 +49,29 @@ def test_op_idx_sv_items():
 
     lol = transformer.op_idx("3", src=transformer.sv)
     assert lol.snam == "sv?"
+
+
+def test_tfn_sans_ornaments():
+    tfn = TypedFileName.grok("t/asset/test1.csv")
+    assert tfn.fname == "t/asset/test1.csv"
+    assert tfn.ext == "csv"
+    assert tfn.ftype == "csv"
+    assert tfn.hsrc is None
+
+
+def test_tfn_sans_ext_orn():
+    with pytest.raises(ValueError):
+        TypedFileName.grok("t/asset/test1")
+
+
+def test_tfn_sans_ext_with_csv_ftype():
+    tfn = TypedFileName.grok("t/asset/test1", ftype="csv")
+    assert tfn.fname == "t/asset/test1"
+    assert tfn.ext == None
+    assert tfn.ftype == "csv"
+    assert tfn.hsrc is None
+
+
+def test_file_flags(ta_test1, ta_test1_nh):
+    assert ta_test1.has("derived_headers") is False
+    assert ta_test1_nh.has("derived_headers") is True

@@ -18,6 +18,16 @@ VERSION = scm_version.split("+")[0]
 ARG_PARSER = None
 
 
+def output(args, df):  # pragma: no cover
+    if args.output is None:
+        ofh = sys.stdout
+
+    if args.output_format.startswith(":"):
+        fmt = args.output_format[1:]
+
+    print("actually outputting things is a TODO item")
+
+
 def populate_args(*a, **kw):  # pragma: no cover
     global ARG_PARSER
     ARG_PARSER = parser = argparse.ArgumentParser(
@@ -26,37 +36,6 @@ def populate_args(*a, **kw):  # pragma: no cover
 
     parser.add_argument(
         "-V", "--version", action="version", version=VERSION, help=f"show version ({VERSION}) and exit"
-    )
-
-    parser.add_argument(
-        "--csv",
-        "-c",
-        action="extend",
-        dest="files",
-        metavar="FILE",
-        nargs="+",
-        type=pdc.util.read_csv,
-        help="csv input files",
-    )
-
-    parser.add_argument(
-        "--headers-from",
-        type=pdc.util.FILE_CACHE.set_headers_from,
-        help="use the headers from this file to populate the column names in --csv-nh",
-    )
-
-    parser.add_argument(
-        "--csv-nh",
-        "--csv-sans-header",
-        "--csv-no-header",
-        "-d",
-        action="extend",
-        dest="files",
-        metavar="FILE",
-        nargs="+",
-        type=pdc.util.read_csv_nh,
-        help="will use headers from whichever --csv was loaded last or "
-        "the file specified with --headers-from to populate the column_names",
     )
 
     parser.add_argument("-o", "--output", help="output filename", default="-")
@@ -93,40 +72,64 @@ def populate_args(*a, **kw):  # pragma: no cover
     parser.add_argument(
         "-a", "--action", default="f*: a + b", type=str, help="the operations and aggregations you wish to run"
     )
+    parser.add_argument(
+        "files",
+        action="extend",
+        metavar="FILE",
+        nargs="*",
+        type=pdc.util.read_file,
+        help="""input files have some magic conventions. The file extension is
+        used to determine the type of file, but if the filename ends with @csv
+        (or @json, @xls, @tsv, etc); then the actual extension will be ignored
+        in favor of this descriptor. Also, some csv files lack a header line.
+        To mark a file as one lacking headers, start the filename with a colon
+        ':' -- %(prog)s will attempt to use the column/header names from which
+        ever file was loaded before this one. And to specify a specific source
+        for such headers, simply specify the source before the colon leader. To
+        specify files that happen to contain colons ':' or atperands '@',
+        escape them with backslashes. Backslashes themselves can be escaped
+        with more backslashes.
+        """,
+    )
 
     ##########################################################
+    # Iff we have args in 'a', format them as a single list arg for parse_args.
+    # Also, we will not provide such a list at all if 'a' is empty as this
+    # confuses parse_args.
     args_for_parse_args = list()
     if a:
         args_for_parse_args.append(a)
-
     args = parser.parse_args(*args_for_parse_args)
+    ##########################################################
 
     if args.output_format is None:
         if args.output is not None:
-            pass  # TODO: if we didn't specify a format, then we could maybe dig it out of the output filename if given
+            # TODO: if we didn't specify a format, then we could maybe dig it
+            # out of the output filename if given
+            pass
         args.output_format = ":orgtbl"
 
     return args
 
 
-def output(args, df):  # pragma: no cover
-    if args.output is None:
-        ofh = sys.stdout
-
-    if args.output_format.startswith(":"):
-        fmt = args.output_format[1:]
-
-    print("actually outputting things is a TODO item")
-
-
 def entry_point(*a, **kw):  # pragma: no cover
-    args = populate_args(*a, **kw)
+    phase = "reticulating splines"
+    pdc.util.FILE_CACHE.clear()
+    try:
+        phase = "processing arguments and options"
+        args = populate_args(*a, **kw)
 
-    if not args.files:
-        ARG_PARSER.print_help()
-        sys.exit(0)
+        if not args.files:
+            ARG_PARSER.print_help()
+            sys.exit(0)
 
-    pf = pdc.parser.parse(args.action, files=args.files)
-    df = pf()
+        phase = "parsing action"
+        pf = pdc.parser.parse(args.action, files=args.files)
 
-    output(args, df)
+        phase = "completing action"
+        df = pf()
+
+        phase = "outputting result"
+        output(args, df)
+    except Exception as error:
+        pdc.util.say_error(f"while {phase}:\n\t{error!r}")

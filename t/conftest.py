@@ -2,20 +2,33 @@
 # coding: utf-8
 
 import os
+import re
 import pytest
 from glob import glob
 
 import pdc.util
 
-TA_NHT = set(glob("t/asset/*_nh.csv"))
-TA_TEST = set(glob("t/asset/test*.csv")) - TA_NHT
-TA_OTHER = set(glob("t/asset/*.csv")) - set(TA_TEST).union(TA_NHT)
 
-TA_NHT = tuple(sorted(TA_NHT))
+def myglob(x):
+    for item in glob(x):
+        if item.endswith("_nh.csv"):
+            hf = os.path.basename(item[:-7]) + ".csv"
+            item = f"{hf}:{item}"
+        yield item
+
+
+TA_TEST_NH = set(myglob("t/asset/*_nh.csv"))
+TA_TEST = set(myglob("t/asset/test*.csv")) - TA_TEST_NH
+TA_OTHER = set(myglob("t/asset/*.csv")) - set(TA_TEST).union(TA_TEST_NH)
+
+TA_TEST_OFMT = set(myglob("t/asset/fmt_test[0-9].*"))
+
+TA_TEST_NH = tuple(sorted(TA_TEST_NH))
 TA_TEST = tuple(sorted(TA_TEST))
 TA_OTHER = tuple(sorted(TA_OTHER))
+TA_TEST_OFMT = tuple(sorted(TA_TEST_OFMT))
 
-__all__ = ["TA_TEST", "TA_OTHER"]
+__all__ = ["TA_TEST", "TA_OTHER", "TA_TEST_NH"]
 
 
 @pytest.fixture(autouse=True)
@@ -31,6 +44,13 @@ def ta_test_fname(request):
     yield request.param
 
 
+@pytest.fixture(params=TA_TEST_OFMT)
+def ta_test_ofmt_fnamez(request):
+    pnam = request.param
+    if m := re.match(r"(.+?)fmt_(.+?)\.(xlsx?|tsv|json)", pnam):
+        yield (pnam, f"{m.group(1)}{m.group(2)}.csv", m.group(3))
+
+
 @pytest.fixture
 def ta_test(ta_test_fname):
     yield pdc.util.read_csv(ta_test_fname)
@@ -42,7 +62,7 @@ def ta_test_all():
 
 
 def gen_ta_fixtures():
-    for path in TA_TEST + TA_OTHER:
+    for path in TA_TEST + TA_OTHER + TA_TEST_NH:
 
         def fixture_func(file):
             @pytest.fixture

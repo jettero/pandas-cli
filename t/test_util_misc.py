@@ -5,6 +5,7 @@ import pytest
 import pdc.util
 import pandas as pd
 from .conftest import TA_TEST
+from pdc.ptype import TypedFileName
 
 
 def test_set_say_level():
@@ -42,45 +43,6 @@ def test_saying_things(capfd):
     assert "[ERROR] test name here\n" in err
 
     pdc.util.set_say_level(orig)
-
-
-def test_read_csv_header_modalities(ta_test_fname):
-    # NOTE: this is wrong... each of these t/asset/test*.csv files has headers.
-    f1 = pdc.util.read_csv(ta_test_fname)
-    fz = (
-        pdc.util.read_csv(ta_test_fname, headers=f1),
-        pdc.util.read_csv(ta_test_fname, headers=f1.df),
-        pdc.util.read_csv(ta_test_fname, headers=f1.columns),
-        pdc.util.read_csv(ta_test_fname, headers=True),
-        pdc.util.read_csv(ta_test_fname, headers=False),
-        pdc.util.read_csv(ta_test_fname, headers=None),
-    )
-
-    for f in fz:
-        assert isinstance(f, pdc.util.File)
-        assert f1.columns == f.columns
-
-    for c in f1.columns:
-        # NOTE: by specifying the headers above, we pretend the files don't
-        # have headers -- but they do, so we have to skip the header in the RHS
-        # below
-
-        # NOTE: also, when a numeric column begins with a string (the header),
-        # pandas assumes the whole column is strings; which is reasonable, so
-        # we hvae to convert the LHS to strings in order to match.
-
-        def convert(*x):
-            return [str(y).lower() for y in x]
-
-        lhs = convert(*(str(x) for x in f1.df[c].tolist()))
-        for f in fz:
-            assert lhs == convert(*f.df[c].tolist()[(1 if f.flags.get("derived_headers") else 0) :])
-
-
-def test_read_csv_header_fail_modalities(ta_test_fname):
-    for item in ((x for x in "supz"), "supz", 7):
-        with pytest.raises(ValueError):
-            pdc.util.read_csv(ta_test_fname, headers=item)
 
 
 def test_df_compare_same():
@@ -131,3 +93,31 @@ def test_special_list_sort():
     assert i("a") == "99a"
     assert i("b") == "00b"
     assert i("c") == "99c"
+
+
+def test_json_with_headers_crashes(ta_test1):
+    with pytest.raises(ValueError):
+        pdc.util.read_file("test1.csv:t/asset/fmt_test1.json")
+
+
+def test_unknown_format_crash():
+    # grok_fname (aka TypedFileName.grok) won't let us specify an unknown
+    # filetype, so we have to really force the issue to even test this
+    # exception.
+    tfn = TypedFileName("t/asset/test1.csv", "csv", "lol", None)
+
+    with pytest.raises(ValueError):
+        pdc.util.read_file(tfn)
+
+
+def test_other_tsv_loader(ta_test_ofmt_fnamez):
+    pnam, onam, ext = ta_test_ofmt_fnamez
+
+    assert pnam.endswith(f".{ext}")
+    assert onam.endswith(".csv")
+    assert pnam[:-3] == pnam[:-3]
+
+    pfil = pdc.util.read_file(pnam)
+    ofil = pdc.util.read_file(onam)
+
+    assert pfil == ofil

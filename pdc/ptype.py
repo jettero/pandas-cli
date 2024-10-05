@@ -1,13 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from collections import namedtuple
-from .util import say_trace, say_error, File
+import os
+from collections import namedtuple, OrderedDict
+from fnmatch import fnmatch
+import pdc.util
+
+FILE_TYPES = ("csv", "tsv", "json", "excel")
+EXT_FILE_MAP = {
+    "js": "json",
+    "xlsx": "excel",
+    "xls": "excel",
+    "yml": "yaml",
+}
 
 
 class Call(namedtuple("Call", ["fn", "args", "kw"])):
     def __call__(self):
-        say_trace(f"Call(): {self}")
+        pdc.util.say_trace(f"Call(): {self}")
         args = [x().df for x in self.args]
         name = " ".join([self.fn.__name__, *(str(x) for x in args)])
         return File(name, self.fn(*args, **self.kw))
@@ -27,14 +37,14 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
 
 class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
     def __call__(self):
-        say_trace(f"Idx(): {self}")
+        pdc.util.say_trace(f"Idx(): {self}")
         try:
             res = self.src[self.idx]
             if isinstance(res, (Call, Idx)):
                 return res()
             return res
         except IndexError:
-            say_error(f"{self} points to nothing")
+            pdc.util.say_error(f"{self} points to nothing")
 
     def __eq__(self, other):
         if isinstance(other, Idx):
@@ -65,3 +75,87 @@ class Idx(namedtuple("Idx", ["op", "idx", "snam", "src"])):
         if self.snam.endswith("?"):
             return f"{{{self.snam[:-1]}{self.op}:{v}}}"
         return f"{{{self.snam}:{v}}}"
+
+
+def ftypeize(x):
+    if isinstance(x, str):
+        x = x.lower()
+        x = EXT_FILE_MAP.get(x, x)
+    return x
+
+
+class TypedFileName(namedtuple("TypedFileName", ["fname", "ext", "ftype", "hsrc"])):
+    @classmethod
+    def grok(cls, fname, ftype=None, hsrc=None):
+        oftype = ftype
+        try:
+            _, ext = fname.rsplit(".", maxsplit=1)  # ValueError when no extension
+            ext = ftypeize(ext)
+        except (AttributeError, ValueError):
+            ext = None
+        ftype = ftypeize(ftype) if ftype else ftypeize(ext)
+        if ftype not in FILE_TYPES:
+            raise ValueError(f"unsupported file type {ftype} -- fname={fname}, ftype={oftype}, ext={ext}")
+        return cls(fname, ext, ftype, hsrc)
+
+
+class FileCache(OrderedDict):
+    @property
+    def last(self):
+        for fname, fobj in reversed(self.items()):
+            if not fobj.has("derived_headers"):
+                return fobj
+
+    def add_file(self, fobj, populate_cache=True):
+        if populate_cache:
+            self[fobj.fname] = fobj
+        return fobj
+
+    def clear(self):
+        super().clear()
+
+    reset = clear
+
+
+FILE_CACHE = FileCache()
+
+
+class File(namedtuple("File", ["fname", "df", "flags"])):
+    def __new__(cls, fname, *a, **kw):
+        fname = os.path.realpath(fname)
+        return super().__new__(cls, fname, *a, kw)
+
+    def __len__(self):
+        return len(self.df)
+
+    def __repr__(self):
+        return f"<{os.path.basename(self.fname)}>"
+
+    def __eq__(self, other):
+        if isinstance(other, File) and pdc.util.df_compare(self.df, other.df):
+            return True
+        return False
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    @property
+    def columns(self):
+        return self.df.columns.tolist()
+
+    @property
+    def as_list(self):
+        return list(sorted(self.df.to_records(index=False).tolist()))
+
+    def has(self, flag):
+        if self.flags.get(flag, False):
+            return True
+        return False
+
+    def glob(self, pat):
+        if "**" not in pat and not pat.startswith("/"):
+            pat = f"**/{pat}"
+        if fnmatch(self.fname, pat):
+            pdc.util.say_debug(f"File::glob({self.fname}, {pat}) -> True")
+            return True
+        pdc.util.say_debug(f"File::glob({self.fname}, {pat}) -> False")
