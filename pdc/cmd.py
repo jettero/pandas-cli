@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import sys
 import argparse
 import subprocess
 import tabulate
+import pandas as pd
 import pdc.util
 import pdc.parser
 
@@ -18,14 +20,29 @@ VERSION = scm_version.split("+")[0]
 ARG_PARSER = None
 
 
-def output(args, df):  # pragma: no cover
+def output(args, file, describe_as=None):  # pragma: no cover
     if args.output is None:
         ofh = sys.stdout
 
     if args.output_format.startswith(":"):
         fmt = args.output_format[1:]
+        if args.max_output_table_lines > 0 and len(file.df) > args.max_output_table_lines:
+            ellipis_row = pd.DataFrame([{col: "⋮" for col in file.columns}])
+            df = pd.concat((file.df.head(args.max_output_table_lines), ellipis_row), ignore_index=True)
+        if describe_as:
+            say_info(f"\n-----=: {describe_as}")
 
-    print("actually outputting things is a TODO item")
+        kw = dict(tablefmt=fmt, showindex=False)
+        if file.flags.get("transposed", False):
+            kw["showindex"] = True
+        else:
+            kw["headers"] = file.columns
+        print(tabulate.tabulate(file.df, **kw))
+        return
+
+    # if args.output_format == 'csv':
+
+    say_error("actually outputting things is a TODO item")
 
 
 def populate_args(*a, **kw):  # pragma: no cover
@@ -49,15 +66,25 @@ def populate_args(*a, **kw):  # pragma: no cover
         help='output format (default: ":orgtbl"): '
         "csv/tsv/xls attempt to use pd.DataFrame output formats. "
         "Formats starting with ':' are assumed to be tabulate format names. "
-        f"The full list includes: {', '.join(OUTPUT_FORMATS)}",
+        f"The full list of table is: {', '.join(OUTPUT_FORMATS)}",
     )
+
+    def _compute_sensible_default():
+        try:
+            rows = int(os.environ.get("LINES", 25))
+        except:
+            rows = 25
+        rows = int(0.75 * rows)
+        if rows < 1:
+            return 1
+        return rows
 
     parser.add_argument(
         "--max-output-table-lines",
         "--max-lines",
         "-m",
         type=int,
-        default=15,
+        default=_compute_sensible_default(),
         help="in tabulate mode, show only this many lines",
     )
 
@@ -92,6 +119,8 @@ def populate_args(*a, **kw):  # pragma: no cover
         """,
     )
 
+    parser.add_argument("--verbose", "-v", action="count", default=0)
+
     ##########################################################
     # Iff we have args in 'a', format them as a single list arg for parse_args.
     # Also, we will not provide such a list at all if 'a' is empty as this
@@ -101,6 +130,9 @@ def populate_args(*a, **kw):  # pragma: no cover
         args_for_parse_args.append(a)
     args = parser.parse_args(*args_for_parse_args)
     ##########################################################
+
+    if args.verbose:
+        pdc.util.set_say_level(-args.verbose)
 
     if args.output_format is None:
         if args.output is not None:

@@ -20,7 +20,12 @@ class Call(namedtuple("Call", ["fn", "args", "kw"])):
         pdc.util.say_trace(f"Call(): {self}")
         args = [x().df for x in self.args]
         name = " ".join([self.fn.__name__, *(str(x) for x in args)])
-        return File(name, self.fn(*args, **self.kw))
+        kwargs = self.kw.copy()
+        try:
+            flags = kwargs.pop("flags")
+        except KeyError:
+            flags = dict()
+        return File(name, self.fn(*args, **kwargs), **flags)
 
     def __repr__(self):
         f = self.fn
@@ -145,7 +150,12 @@ class File(namedtuple("File", ["fname", "df", "flags"])):
 
     @property
     def as_list(self):
-        return list(sorted(self.df.to_records(index=False).tolist()))
+        return self.df.to_records(index=False).tolist()
+
+    records = as_list
+
+    def to_records(self, *a, **kw):
+        return self.df.to_records(*a, **kw)
 
     def has(self, flag):
         if self.flags.get(flag, False):

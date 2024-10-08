@@ -30,7 +30,12 @@ def concat(A, B, key=None):
     return df.drop_duplicates(subset=key, keep="last")
 
 
+def transpose(A):
+    return A.transpose()
+
+
 def transpocat(A, B, key=None, merge_type="outer"):
+    # XXX: maybe this is 'append' or 'sidepend'? ... I just really like this word transpocat.
     #  aaa   bbb   aaabbb
     #  aaa + bbb = aaabbb
     #  aaa   bbb   aaabbb

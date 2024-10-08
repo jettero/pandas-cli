@@ -17,6 +17,8 @@ expr: operation | df
 
 operation: expr "+" expr options -> concat
          | expr "-" expr options -> filter
+         | expr "." expr options -> transpocat
+         | expr "^" options -> transpose
          | wild_df_seq MAPPING expr -> reduce
          | assign
 
@@ -91,6 +93,18 @@ class MacroTransformer(Transformer):
     def filter(self, op1, op2, opt):
         c = Call(pdc.op.filter, (op1, op2), opt)
         say_debug(f"MT::filter({op1.short}, {op2.short}, {opt!r}) -> {c}")
+        return c
+
+    def transpocat(self, op1, op2, opt):
+        c = Call(pdc.op.transpocat, (op1, op2), opt)
+        say_debug(f"MT::filter({op1.short}, {op2.short}, {opt!r}) -> {c}")
+        return c
+
+    def transpose(self, op, opt):
+        opt["flags"] = opt.get("flags", dict())
+        opt["flags"]["transposed"] = True
+        c = Call(pdc.op.transpose, (op,), opt)
+        say_debug(f"MT::transpose({op.short}, {opt!r}) -> {c}")
         return c
 
     def op_idx(self, op, src=None):
@@ -185,6 +199,7 @@ parser = Lark(grammar, parser="lalr", transformer=transformer)
 
 
 def parse(statement="f*: a + b", files=None):
+    say_debug(f"parse({statement})")
     for item in files:
         if not isinstance(item, File):
             raise ValueError(f"{item} is an invalid pdc.File argument")

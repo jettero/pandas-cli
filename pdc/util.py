@@ -24,15 +24,8 @@ def xlate_column_labels(df, *items):
     return list(sorted(ret))
 
 
-def df_sorted_records(*df):
-    for item in df:
-        if isinstance(item, File):
-            item = item.df
-        yield sorted(item.to_records(index=False).tolist())
-
-
 def df_zipper(*df, strict=False):
-    yield from zip(*df_sorted_records(*df), strict=strict)
+    yield from zip(*(x.to_records(index=False).tolist() for x in df), strict=strict)
 
 
 def df_compare(*df):
@@ -42,6 +35,7 @@ def df_compare(*df):
         for item0, *items in df_zipper(*df, strict=True):
             for item in items:
                 if item0 != item:
+                    say_debug(f"{item0} != {item}")
                     return False
     except ValueError as e:
         return False  # zipper strict=True raises a ValueError when length differs
@@ -129,7 +123,6 @@ def read_file(fname, cache_ok=False, populate_cache=True, globby_ok=False):
 
 
 ####################################################
-
 SAY_TRACE = 0
 SAY_DEBUG = SAY_TRACE + 1
 SAY_INFO = SAY_DEBUG + 1
@@ -137,27 +130,7 @@ SAY_WARN = SAY_INFO + 1
 SAY_ERROR = SAY_WARN + 1
 SAY_LEVEL = SAY_ERROR
 SAY_WORDS = "TRACE DEBUG INFO WARN ERROR".split()
-
-
-def set_say_level(x=None):
-    global SAY_LEVEL
-    try:
-        x = x if x is not None else os.environ["PDC_SAY_LEVEL"]
-        try:
-            x = x.upper()
-            x = SAY_WORDS.index(x)
-        except (ValueError, AttributeError):
-            x = int(x)
-        SAY_LEVEL = max(SAY_TRACE, min(x, SAY_ERROR))
-    except (KeyError, ValueError):
-        SAY_LEVEL = SAY_ERROR
-    return SAY_LEVEL
-
-
-set_say_level()
-
-
-SAY_TRIGGER = bytes([87, 84, 70]).decode()
+SAY_TRIGGER = bytes([87, 84, 70]).decode()  # if this is in any say string, we print no matter what the other settings
 
 
 def say(*msg, level=SAY_INFO):
@@ -187,3 +160,26 @@ say_warning = say_warn
 
 def say_error(*msg):
     say(*msg, level=SAY_ERROR)
+
+
+def set_say_level(x=None):
+    global SAY_LEVEL
+    try:
+        x = x if x is not None else os.environ["PDC_SAY_LEVEL"]
+        try:
+            if (y := int(x)) < 0:
+                x = SAY_LEVEL + y  # actually minus, eg y=-6
+        except ValueError:
+            pass
+        try:
+            x = x.upper()
+            x = SAY_WORDS.index(x)
+        except (ValueError, AttributeError):
+            x = int(x)
+        SAY_LEVEL = max(SAY_TRACE, min(x, SAY_ERROR))
+    except (KeyError, ValueError):
+        SAY_LEVEL = SAY_ERROR
+    return SAY_LEVEL
+
+
+set_say_level()

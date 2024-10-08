@@ -15,7 +15,7 @@ def test_concat_without_key(ta_test1, ta_test2, ta_t1Ct2):
 def test_concat_with_key(ta_test1, ta_test2, ta_t1Ct2Kvar):
     for k in ("var", ("var",), ["var"]):
         df = pdc.op.concat(ta_test1.df, ta_test2.df, key=k)
-        for lhs, rhs in df_zipper(df, ta_t1Ct2Kvar.df):
+        for lhs, rhs in df_zipper(df, ta_t1Ct2Kvar):
             assert lhs == rhs
 
     with pytest.raises(ValueError):
@@ -54,3 +54,10 @@ def test_filter_without_key(ta_test1, ta_test2):
     ldf = len(df)
     lta = len(ta_test1.df)
     assert ldf == lta
+
+
+def test_transpose(ta_test1):
+    df = pdc.op.transpose(ta_test1.df)
+
+    for i, thing in enumerate(zip(ta_test1.df["var"].tolist(), ta_test1.df["val"].tolist())):
+        assert df[i].tolist() == list(thing)

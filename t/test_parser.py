@@ -105,6 +105,36 @@ def test_filter(ta_test1, ta_test2, ta_t1Ft2Kvar):
         assert lhs == rhs
 
 
+def test_transpocat(ta_test1, ta_test2, ta_t1TCt2Kvar):
+    pf = pdc.parser.parse("f1 . f2 @ var", files=(ta_test1, ta_test2))
+
+    assert pf.fn is pdc.op.transpocat
+    assert pf.args[0].deref is ta_test1
+    assert pf.args[1].deref is ta_test2
+
+    df = pf()
+    assert ta_t1TCt2Kvar == df
+
+
+def test_transpose(ta_test1, ta_t1transposed):
+    pf = pdc.parser.parse("f1^", files=(ta_test1,))
+
+    assert pf.fn is pdc.op.transpose
+    assert pf.args[0].deref is ta_test1
+
+    # NOTE: when we read in a csv, the types of columns are inferred by pandas.
+    # but when the columns are transposed to rows, the integer column of test1
+    # becomes an integer row, and then pandas infers a string type on each
+    # column.  to make the below work out, we have to first convert
+    # ta_test1.df['val'] to strings.
+
+    ta_test1.df["val"] = ta_test1.df["val"].map(str)
+
+    df = pf()
+    assert df.flags.get("transposed") is True
+    assert ta_t1transposed == df
+
+
 def test_reduce_t1Ct2(ta_test1, ta_test2, ta_t1Ct2):
     pf = pdc.parser.parse("f*: a + b", files=(ta_test1, ta_test2))
 
