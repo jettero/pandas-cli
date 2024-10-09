@@ -4,7 +4,6 @@
 import os
 import sys
 import argparse
-import subprocess
 import tabulate
 import pandas as pd
 import pdc.util

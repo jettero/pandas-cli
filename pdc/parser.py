@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from lark import Lark, Transformer, v_args
-from .util import say_debug, say_trace, say_error
+from .util import say_debug, say_trace
 import pdc.op
 from .ptype import Call, Idx, File
 

@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import pandas as pd
-from .util import say_warn, xlate_column_labels
+from .util import xlate_column_labels
 
 DING_DING_DING = "\x07\x07\x07"  # ding ding ding
 

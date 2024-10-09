@@ -4,7 +4,6 @@
 import pytest
 import pdc.util
 import pandas as pd
-from .conftest import TA_TEST
 from pdc.ptype import TypedFileName
 
 

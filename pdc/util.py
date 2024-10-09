@@ -2,7 +2,6 @@
 
 import os
 import sys
-import re
 from fnmatch import fnmatch
 import pandas as pd
 from .fname_parser import grok_fname

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os
-import inspect
 from lark import Lark, Transformer, v_args
 from .ptype import TypedFileName, File
 

@@ -85,7 +85,6 @@ gen_ta_fixtures()
 ## from before the current re-write... unused for now...
 
 from t.bin.gen_csv import main as gen_csv
-from t.bin.gen_json import main as gen_json
 
 
 @pytest.fixture
