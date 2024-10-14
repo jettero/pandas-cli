@@ -2,9 +2,9 @@
 # I've had the idea to make this more than once
 
 I started making this like two years ago, but lost interest. Then I started
-making it again (see old/pd-thing). I didn't finish it, but I remembered I
-had the same idea before. Maybe by copying my new version into old/ I'll
-suddenly start working on this again? we'll see.
+making it again. I didn't finish the remake, but I remembered I had the same
+idea before and circled back to this. I'm not the first person to think of this
+or things like it ([SEE_ALSO](./SEE_ALSO.md)).
 
 My fresher energy ideas (although I still like the below) is that I really need
 a way to combine various input csvs column-wise or row-wise (or maybe horizontal
