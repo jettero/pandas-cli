@@ -1,3 +1,7 @@
+# requirements files (if generated)
+/*req*.txt
+/.base-reqs
+
 # don't accidentally track stray one-off test files and other spam
 /*.csv
 /*.tsv
