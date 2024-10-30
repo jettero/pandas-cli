@@ -3,21 +3,21 @@
 test: .reqs
 	pytest
 
+build: .reqs
+	python -m build
+
 praf pre-commit-all-files: .reqs
 	pre-commit run --all-files
-
-build:
-	python -m build
 
 .reqs: requirements.txt test-requirements.txt
 	@touch $@
 	pip install -Ur requirements.txt -r test-requirements.txt
 
-requirements.txt: .base-reqs
-	toml-to-req --toml-file pyproject.toml --requirements-file $@
+requirements.txt: pyproject.toml .base-reqs
+	toml-to-req --toml-file $< --requirements-file $@
 
-test-requirements.txt: .base-reqs
-	toml-to-req --toml-file pyproject.toml --optional-lists test --requirements-file $@
+test-requirements.txt: pyproject.toml .base-reqs
+	toml-to-req --toml-file $< --optional-lists test --requirements-file $@
 
 .base-reqs:
 	@touch $@
