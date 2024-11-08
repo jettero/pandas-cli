@@ -54,6 +54,13 @@ def populate_args(*a, **kw):  # pragma: no cover
         "-V", "--version", action="version", version=VERSION, help=f"show version ({VERSION}) and exit"
     )
 
+    parser.add_argument(
+        "--help-actions",
+        "--help-query-language",
+        action="store_true",
+        help=f"show details on the actions/query-language",
+    )
+
     parser.add_argument("-o", "--output", help="output filename", default="-")
 
     OUTPUT_FORMATS = ["csv", "tsv", "xls", *(f":{x}" for x in tabulate.tabulate_formats)]
@@ -63,9 +70,9 @@ def populate_args(*a, **kw):  # pragma: no cover
         choices=OUTPUT_FORMATS,
         metavar="FMT",
         help='output format (default: ":orgtbl"): '
-        "csv/tsv/xls attempt to use pd.DataFrame output formats. "
-        "Formats starting with ':' are assumed to be tabulate format names. "
-        f"The full list of table is: {', '.join(OUTPUT_FORMATS)}",
+        "formats: csv/tsv/xls are computed using the pd.DataFrame output systems (e.g., df.to_csv). "
+        "Formats starting with ':' are assumed to be tabulate format names, which itself is designed to work with pd.DataFrames. "
+        f"The full list of tabulate formats: {', '.join(OUTPUT_FORMATS)}",
     )
 
     def _compute_sensible_default():
@@ -96,7 +103,11 @@ def populate_args(*a, **kw):  # pragma: no cover
     )
 
     parser.add_argument(
-        "-a", "--action", default="f*: a + b", type=str, help="the operations and aggregations you wish to run"
+        "-a",
+        "--action",
+        default="f*: a + b",
+        type=str,
+        help="the operations and aggregations you wish to run. use --help-actions for further information",
     )
     parser.add_argument(
         "files",
@@ -104,17 +115,17 @@ def populate_args(*a, **kw):  # pragma: no cover
         metavar="FILE",
         nargs="*",
         type=pdc.util.read_file,
-        help="""input files have some magic conventions. The file extension is
-        used to determine the type of file, but if the filename ends with @csv
-        (or @json, @xls, @tsv, etc); then the actual extension will be ignored
-        in favor of this descriptor. Also, some csv files lack a header line.
-        To mark a file as one lacking headers, start the filename with a colon
-        ':' -- %(prog)s will attempt to use the column/header names from which
-        ever file was loaded before this one. And to specify a specific source
-        for such headers, simply specify the source before the colon leader. To
-        specify files that happen to contain colons ':' or atperands '@',
-        escape them with backslashes. Backslashes themselves can be escaped
-        with more backslashes.
+        help="""input file names have some magic conventions. The file
+        extension is used to determine the type of file, but if the filename
+        ends with @csv (or @json, @xls, @tsv, etc); then the actual extension
+        will be ignored in favor of this descriptor. Also, some csv files lack
+        a header line. To mark a file as one lacking headers, start the
+        filename with a colon ':' -- %(prog)s will attempt to use the
+        column/header names from which ever file was loaded before the one so
+        named. To specify a specific source for such headers, simply specify
+        the source before the colon leader. To specify files that happen to
+        contain colons (':') or atperands ('@'), escape them with backslashes.
+        Backslashes themselves can be escaped with more backslashes.
         """,
     )
 
@@ -150,6 +161,10 @@ def entry_point(*a, **kw):  # pragma: no cover
         phase = "processing arguments and options"
         args = populate_args(*a, **kw)
 
+        if args.help_actions:
+            print(query_language_doc)
+            sys.exit(0)
+
         if not args.files:
             ARG_PARSER.print_help()
             sys.exit(0)
@@ -164,3 +179,72 @@ def entry_point(*a, **kw):  # pragma: no cover
         output(args, df)
     except Exception as error:
         pdc.util.say_error(f"while {phase}:\n\t{error!r}")
+
+
+query_language_doc = f"""
+Actions:
+    Binary Operators:
+        + concat: Concatenate files together top to bottom
+
+            aaa   bbb   aaa
+            aaa + bbb = aaa
+            aaa   bbb   aaa
+
+                        bbb
+                        bbb
+                        bbb
+
+        . transpocat aka right-cat: Append subsequent files to the right
+
+            aaa   bbb   aaa bbb
+            aaa + bbb = aaa bbb
+            aaa   bbb   aaa bbb
+
+        - filter aka left-join: subtract entries in the right-hand-side from the entries on the left-hand-side using key fields
+
+            axx   ayy   bxx
+            bxx - dyy = cxx
+            cxx   eyy
+
+    Urinary Operators:
+        ^ transpose: change the orientation of the rows/cols
+
+           ( abc )   adg
+          ^( def ) = beh
+           ( ghi )   cfi
+
+          Becuase pd.DataFrame and tabulate assume columns have names, this operation has various confusing side effects.
+
+Chains:
+    Several actions can be chained together using a semi-colon separator. Every
+    operation in the "program" is silently assigned to a numbered temporary
+    variable.
+
+    In this way, we can write
+
+        f1 + f2 + f3
+
+    as
+
+        f1 + f2; t1 + f3
+
+    The "output" of the "program" is simply the result of the last operation in
+    the chain. In the above examples that would be the result of `t1 + f2 + f3`
+    or the result of `t1 + t3`. These result items happen to be assigned to
+    `t1` and `t2` respectively, but the parser simply looks at the top item on
+    the temporary variable stack, regardless of the number.
+
+    Note, that if you specify that result:
+
+        f1 + f2 + f3; t1
+
+    Then the parser will find the result in `t2`, which happens to be the same
+    result stored in `t1`.
+
+Reductions:
+    We run dataframes through reductions as follows.
+
+        f1, f2, f3: a + b  ⇒  f1 + f2 + f3
+
+        f*: a + b  ⇒  f1 + f2 + …
+"""

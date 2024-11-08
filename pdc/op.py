@@ -31,11 +31,13 @@ def concat(A, B, key=None):
 
 
 def transpose(A):
+    #   abc   adg
+    # ^ def = beh
+    #   ghi   cfi
     return A.transpose()
 
 
 def transpocat(A, B, key=None, merge_type="outer"):
-    # XXX: maybe this is 'append' or 'sidepend'? ... I just really like this word transpocat.
     #  aaa   bbb   aaabbb
     #  aaa + bbb = aaabbb
     #  aaa   bbb   aaabbb
